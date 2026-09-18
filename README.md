@@ -38,3 +38,6 @@ Aarthik Gyan is organized around a modular ingestion and graph-processing pipeli
 ├── main.py
 ├── requirements.txt
 └── .gitignore
+
+
+#bholi writer.py dekhi garnu kaam
