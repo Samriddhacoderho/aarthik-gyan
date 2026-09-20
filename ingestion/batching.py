@@ -19,7 +19,7 @@ def batch_chunks(chunks: list[str], max_tokens_per_batch: int = 20000, max_chunk
     current_tokens = 0
 
     for chunk in chunks:
-        chunk_tokens = estimate_tokens(chunk)
+        chunk_tokens = estimate_tokens(chunk.page_content)
 
         would_exceed_tokens = current_tokens + chunk_tokens > max_tokens_per_batch
         would_exceed_count = len(current_batch) >= max_chunks_per_batch
@@ -29,7 +29,7 @@ def batch_chunks(chunks: list[str], max_tokens_per_batch: int = 20000, max_chunk
             current_batch = []
             current_tokens = 0
 
-        current_batch.append(chunk)
+        current_batch.append(chunk.page_content)
         current_tokens += chunk_tokens
 
     if current_batch:
