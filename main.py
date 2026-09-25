@@ -4,6 +4,9 @@ from ingestion.document_registry import (compute_file_hash, is_already_ingested,
 from graph.writer import write_extraction_to_graph
 from graph.neo4j_client import neo4j_client
 from agent.qa_agent import answer_question
+from vectorstore.indexer import index_chunks
+from vectorstore.qdrant_client import vector_store_client
+from vectorstore.indexer import search_chunks
 
 
 def ingest(file_path: str):
@@ -24,6 +27,7 @@ def ingest(file_path: str):
         print(f"[main] Extracted {len(result.entities)} entities, {len(result.relationships)} relationships.")
 
         write_extraction_to_graph(result)
+        index_chunks(chunks, filename, file_hash)  
         register_document(file_hash, filename, len(result.entities), len(result.relationships))
         print("[main] Ingestion complete.")
     except Exception as e:
@@ -40,10 +44,23 @@ def ask(question: str):
 
 if __name__ == "__main__":
     neo4j_client.verify_connection()
+    vector_store_client.verify_connection()
 
     ingest("documents/Sample-Financial-Statements-1.pdf")
     ingest("documents/NASDAQ_TSLA_2025.pdf")
 
     ask("Compare the net income of all companies and give the count of highest net income")
+    results = search_chunks("concerning statements about liquidity or debt")
+    for r in results:
+        print(r["score"], "-", r["text"][:150])    
 
     neo4j_client.close()
+
+
+
+
+
+
+
+
+
