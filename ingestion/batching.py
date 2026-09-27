@@ -3,7 +3,7 @@ def estimate_tokens(text: str) -> int:
     return len(text) // 4
 
 
-def batch_chunks(chunks: list[str], max_tokens_per_batch: int = 20000, max_chunks_per_batch: int = 15) -> list[list[str]]:
+def batch_chunks(chunks: list[str], max_tokens_per_batch: int = 15000, max_chunks_per_batch: int = 10) -> list[list[str]]:
     """Groups chunk texts into batches bounded by BOTH an estimated token budget
     AND a max chunk count (extraction quality tends to degrade if you cram in
     too many chunks even when they'd technically fit token-wise).

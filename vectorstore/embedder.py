@@ -1,4 +1,5 @@
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
+from langchain_core.documents import Document
 
 _model = None
 
@@ -16,7 +17,8 @@ def embed_text(text: str) -> list[float]:
     return model.embed_query(text)
 
 
-def embed_texts(texts: list[str]) -> list[list[float]]:
+def embed_texts(documents: list[Document]) -> list[list[float]]:
     """Batched embedding — much faster than calling embed_text in a loop."""
     model = get_embedder()
-    return model.embed_documents(texts)
+    embeddings = model.embed_documents([doc.page_content for doc in documents])
+    return embeddings

@@ -3,9 +3,10 @@ from qdrant_client.models import PointStruct
 from vectorstore.qdrant_client import vector_store_client
 from vectorstore.embedder import embed_texts
 from config import QDRANT_COLLECTION
+from langchain_core.documents import Document
 
 
-def index_chunks(chunks: list[str], filename: str, file_hash: str):
+def index_chunks(chunks: list[Document], filename: str, file_hash: str):
     """Embeds each chunk and upserts into Qdrant, tagged with source metadata
     so retrieval results can be traced back to the originating document."""
     if not chunks:
@@ -18,7 +19,7 @@ def index_chunks(chunks: list[str], filename: str, file_hash: str):
             id=str(uuid.uuid4()),
             vector=embedding,
             payload={
-                "text": chunk,
+                "text": chunk.page_content,
                 "filename": filename,
                 "document_hash": file_hash,
                 "chunk_index": i,

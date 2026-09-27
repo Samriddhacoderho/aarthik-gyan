@@ -7,6 +7,7 @@ from agent.qa_agent import answer_question
 from vectorstore.indexer import index_chunks
 from vectorstore.qdrant_client import vector_store_client
 from vectorstore.indexer import search_chunks
+from risk.risk_agent import run_risk_agent
 
 
 def ingest(file_path: str):
@@ -14,12 +15,12 @@ def ingest(file_path: str):
     filename = file_path.split("/")[-1]
 
     if is_already_ingested(file_hash):
-        print(f"[main] '{filename}' already ingested (hash match):skipping extraction.")
+        print(f"[main] '{filename}' already ingested (hash match): skipping extraction.")
         return
 
     print(f"[main] Reading {file_path}...")
-    text = extract_text_from_pdf(file_path)
-    chunks = chunk_text(text)
+    docs = extract_text_from_pdf(file_path)
+    chunks = chunk_text(docs)
     print(f"[main] Split into {len(chunks)} chunks.")
 
     try:
@@ -27,7 +28,13 @@ def ingest(file_path: str):
         print(f"[main] Extracted {len(result.entities)} entities, {len(result.relationships)} relationships.")
 
         write_extraction_to_graph(result)
-        index_chunks(chunks, filename, file_hash)  
+        index_chunks(chunks, filename, file_hash)
+
+        full_text = "\n".join(doc.page_content for doc in docs)
+        for entity in result.entities:
+            if entity.type == "Company":
+                run_risk_agent(full_text, entity.id, entity.name)
+
         register_document(file_hash, filename, len(result.entities), len(result.relationships))
         print("[main] Ingestion complete.")
     except Exception as e:
