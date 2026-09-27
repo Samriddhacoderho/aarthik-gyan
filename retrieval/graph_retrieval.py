@@ -1,3 +1,4 @@
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -9,7 +10,8 @@ from prompts.cypher_generation_prompt import CYPHER_GEN_PROMPT
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=20))
 def generate_cypher(question: str) -> str:
-    model = ChatGroq(model="qwen/qwen3-32b", temperature=0)
+    # model = ChatGroq(model="qwen/qwen3.8-27b", temperature=0)
+    model = ChatGoogleGenerativeAI(model="gemini-flash-latest")
     prompt = PromptTemplate(template=CYPHER_GEN_PROMPT, input_variables=["question"])
     chain = prompt | model | StrOutputParser()
     response = chain.invoke({"question": question})

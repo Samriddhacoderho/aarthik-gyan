@@ -5,7 +5,7 @@ from config import QDRANT_URL, QDRANT_API_KEY, QDRANT_COLLECTION, EMBEDDING_DIM
 
 class VectorStoreClient:
     def __init__(self):
-        self.client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY)
+        self.client = QdrantClient(url=QDRANT_URL, api_key=QDRANT_API_KEY, timeout=60)
         self._ensure_collection()
 
     def _ensure_collection(self):

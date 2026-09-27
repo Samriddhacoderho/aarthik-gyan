@@ -1,4 +1,5 @@
 import json
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -12,8 +13,8 @@ from retrieval.router import route_question
 def answer_question(question: str) -> str:
     retrieval_results = route_question(question)
 
-    # model = ChatGoogleGenerativeAI(model="gemini-flash-latest")
-    model = ChatGroq(model="qwen/qwen3-32b", temperature=0)
+    model = ChatGoogleGenerativeAI(model="gemini-flash-latest")
+    # model = ChatGroq(model="qwen/qwen3.8-27b", temperature=0)
     prompt = PromptTemplate(template=ANSWER_PROMPT, input_variables=["question", "results"])
     chain = prompt | model | StrOutputParser()
     response = chain.invoke({

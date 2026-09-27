@@ -53,13 +53,10 @@ if __name__ == "__main__":
     neo4j_client.verify_connection()
     vector_store_client.verify_connection()
 
-    ingest("documents/Sample-Financial-Statements-1.pdf")
+    # ingest("documents/Sample-Financial-Statements-1.pdf")
     ingest("documents/NASDAQ_TSLA_2025.pdf")
 
     ask("Compare the net income of all companies and give the count of highest net income")
-    results = search_chunks("concerning statements about liquidity or debt")
-    for r in results:
-        print(r["score"], "-", r["text"][:150])    
 
     neo4j_client.close()
 

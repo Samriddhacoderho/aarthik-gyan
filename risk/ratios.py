@@ -1,13 +1,15 @@
+from langchain_google_genai import ChatGoogleGenerativeAI
 from tenacity import retry, stop_after_attempt, wait_exponential
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from schemas.risk import FinancialMetrics, metrics_parser, RiskScore
-from prompts import METRICS_EXTRACTION_PROMPT
+from prompts.metrics_extraction_prompt import METRICS_EXTRACTION_PROMPT
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=20))
 def extract_financial_metrics(text: str, company_hint: str) -> FinancialMetrics:
-    model = ChatGroq(model="qwen/qwen3-32b", temperature=0)
+    # model = ChatGroq(model="qwen/qwen3.8-27b", temperature=0)
+    model = ChatGoogleGenerativeAI(model="gemini-flash-latest")
     prompt = PromptTemplate(
         template=METRICS_EXTRACTION_PROMPT,
         input_variables=["text"],

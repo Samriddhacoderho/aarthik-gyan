@@ -6,9 +6,10 @@ from config import QDRANT_COLLECTION
 from langchain_core.documents import Document
 
 
-def index_chunks(chunks: list[Document], filename: str, file_hash: str):
-    """Embeds each chunk and upserts into Qdrant, tagged with source metadata
-    so retrieval results can be traced back to the originating document."""
+def index_chunks(chunks: list[Document], filename: str, file_hash: str, batch_size: int = 64):
+    """Embeds all chunks, then upserts into Qdrant in smaller batches —
+    a single upsert of hundreds of points can exceed the client's write timeout
+    over a network connection to a cloud cluster."""
     if not chunks:
         return
 
@@ -28,10 +29,15 @@ def index_chunks(chunks: list[Document], filename: str, file_hash: str):
         for i, (chunk, embedding) in enumerate(zip(chunks, embeddings))
     ]
 
-    vector_store_client.client.upsert(collection_name=QDRANT_COLLECTION, points=points)
-    print(f"[indexer] Indexed {len(points)} chunks from '{filename}' into Qdrant.")
+    total = len(points)
+    for start in range(0, total, batch_size):
+        batch = points[start:start + batch_size]
+        vector_store_client.client.upsert(collection_name=QDRANT_COLLECTION, points=batch)
+        print(f"[indexer] Upserted {min(start + batch_size, total)}/{total} points into Qdrant.")
 
-
+    print(f"[indexer] Finished indexing {total} chunks from '{filename}' into Qdrant.")
+    
+    
 def search_chunks(query: str, top_k: int = 5) -> list[dict]:
     """Semantic search — returns the top_k most similar chunks with their metadata."""
     from vectorstore.embedder import embed_text
