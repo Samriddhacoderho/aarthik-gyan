@@ -7,12 +7,13 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from prompts.retrieval_routing_prompt import ROUTING_PROMPT
 from retrieval.graph_retrieval import retrieve_from_graph
 from retrieval.vector_retriever import retrieve_from_vector
+from config import GEMINI_MODEL, GROQ_MODEL
 
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=20))
 def classify_question(question: str) -> str:
-    # model = ChatGroq(model="qwen/qwen3.8-27b", temperature=0)
-    model = ChatGoogleGenerativeAI(model="gemini-flash-latest")
+    # model = ChatGroq(model=GROQ_MODEL, temperature=0)
+    model = ChatGoogleGenerativeAI(model=GEMINI_MODEL)
     prompt = PromptTemplate(template=ROUTING_PROMPT, input_variables=["question"])
     chain = prompt | model | StrOutputParser()
     response = chain.invoke({"question": question}).strip().upper()

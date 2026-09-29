@@ -3,7 +3,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 from langchain_groq import ChatGroq
-from config import GROQ_API_KEY
+from config import GROQ_API_KEY, GROQ_MODEL,GEMINI_MODEL
 
 from schemas.entities import ExtractionResult
 from prompts.extraction_prompt import EXTRACTION_PROMPT
@@ -14,8 +14,8 @@ parser = PydanticOutputParser(pydantic_object=ExtractionResult)
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=20))
 def extract_entities_from_batch(batch: list[str]) -> ExtractionResult:
-    # model = ChatGoogleGenerativeAI(model="gemini-flash-latest")
-    model = ChatGroq(model="qwen/qwen3.8-27b",temperature=0)
+    # model = ChatGoogleGenerativeAI(model=GEMINI_MODEL)
+    model = ChatGroq(model=GROQ_MODEL,temperature=0)
     prompt = PromptTemplate(
         template=EXTRACTION_PROMPT,
         input_variables=["text"],

@@ -1,6 +1,8 @@
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
 from langchain_core.documents import Document
 
+from config import EMBEDDING_MODEL
+
 _model = None
 
 def get_embedder():
@@ -8,7 +10,7 @@ def get_embedder():
     global _model
     if _model is None:
         print(f"[embedder] Loading model...")
-        _model = HuggingFaceEndpointEmbeddings(model="sentence-transformers/all-MiniLM-L6-v2")
+        _model = HuggingFaceEndpointEmbeddings(model=EMBEDDING_MODEL)
     return _model
 
 

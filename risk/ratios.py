@@ -4,12 +4,12 @@ from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from schemas.risk import FinancialMetrics, metrics_parser, RiskScore
 from prompts.metrics_extraction_prompt import METRICS_EXTRACTION_PROMPT
-
+from config import GEMINI_MODEL, GROQ_MODEL
 
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=20))
 def extract_financial_metrics(text: str, company_hint: str) -> FinancialMetrics:
-    # model = ChatGroq(model="qwen/qwen3.8-27b", temperature=0)
-    model = ChatGoogleGenerativeAI(model="gemini-flash-latest")
+    # model = ChatGroq(model=GROQ_MODEL, temperature=0)
+    model = ChatGoogleGenerativeAI(model=GEMINI_MODEL)
     prompt = PromptTemplate(
         template=METRICS_EXTRACTION_PROMPT,
         input_variables=["text"],
