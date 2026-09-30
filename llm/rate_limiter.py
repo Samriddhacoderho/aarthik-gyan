@@ -16,4 +16,4 @@ class ProviderSemaphore:
 
 
 from config import MAX_EXTRACTION_WORKERS
-extraction_semaphore = ProviderSemaphore(MAX_EXTRACTION_WORKERS)
+extraction_semaphore = ProviderSemaphore(MAX_EXTRACTION_WORKERS)    

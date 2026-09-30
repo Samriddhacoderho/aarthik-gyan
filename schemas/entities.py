@@ -23,4 +23,15 @@ class ExtractionResult(BaseModel):
     entities:list[Entity] = Field(..., description="List of entities extracted from the document")
     relationships:list[Relationship] = Field(..., description="List of relationships between the entities")
     
-parser=PydanticOutputParser(pydantic_object=ExtractionResult)
+    
+class EntityAlias(BaseModel):
+    canonical_id: str = Field(..., description="The id all aliases should be merged into")
+    aliases: list[str] = Field(..., description="Other entity ids referring to the same real-world entity")
+
+
+class EntityResolutionResult(BaseModel):
+    groups: list[EntityAlias]
+    
+
+parser_entity_resolution = PydanticOutputParser(pydantic_object=EntityResolutionResult)    
+parser_extraction = PydanticOutputParser(pydantic_object=ExtractionResult)
