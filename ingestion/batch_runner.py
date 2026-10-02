@@ -1,6 +1,6 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from llm.rate_limiter import extraction_semaphore
-from ingestion.extractor import extract_entities_from_batch
+from ingestion.extractor_shared import extract_entities_from_batch
 from schemas.entities import ExtractionResult
 from config import MAX_EXTRACTION_WORKERS
 

@@ -13,20 +13,6 @@ from ingestion.batch_runner import run_batches_parallel, retry_failed_batches
 
 
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=20))
-def extract_entities_from_batch(batch: list[str]) -> ExtractionResult:
-    # model = ChatGoogleGenerativeAI(model=GEMINI_MODEL)
-    model = ChatGroq(model=GROQ_MODEL,temperature=0)
-    prompt = PromptTemplate(
-        template=EXTRACTION_PROMPT,
-        input_variables=["text"],
-        partial_variables={"format_instructions": parser.get_format_instructions()},
-    )
-    chain = prompt | model | parser
-    batch_text = format_batch_for_prompt(batch)
-    return chain.invoke({"text": batch_text})
-
-
 def extract_entities_from_document(chunks: list[str]) -> tuple[ExtractionResult, list[dict]]:
     """Batches, extracts in parallel, retries failures once, merges results.
     Returns (merged_result, permanently_failed_batches) — caller decides how
