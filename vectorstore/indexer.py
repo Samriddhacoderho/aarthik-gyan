@@ -4,6 +4,7 @@ from vectorstore.qdrant_client import vector_store_client
 from vectorstore.embedder import embed_texts
 from config import QDRANT_COLLECTION
 from langchain_core.documents import Document
+from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 
 def index_chunks(chunks: list[Document], filename: str, file_hash: str, batch_size: int = 64):
@@ -38,22 +39,19 @@ def index_chunks(chunks: list[Document], filename: str, file_hash: str, batch_si
     print(f"[indexer] Finished indexing {total} chunks from '{filename}' into Qdrant.")
     
     
-def search_chunks(query: str, top_k: int = 5) -> list[dict]:
-    """Semantic search — returns the top_k most similar chunks with their metadata."""
+
+def search_chunks(query: str, top_k: int = 5, document_hash: str | None = None) -> list[dict]:
     from vectorstore.embedder import embed_text
 
     query_vector = embed_text(query)
+    search_filter = None
+    if document_hash:
+        search_filter = Filter(must=[FieldCondition(key="document_hash", match=MatchValue(value=document_hash))])
+
     results = vector_store_client.client.search(
         collection_name=QDRANT_COLLECTION,
         query_vector=query_vector,
+        query_filter=search_filter,
         limit=top_k,
     )
-
-    return [
-        {
-            "text": hit.payload["text"],
-            "filename": hit.payload["filename"],
-            "score": hit.score,
-        }
-        for hit in results
-    ]
+    return [{"text": hit.payload["text"], "filename": hit.payload["filename"], "score": hit.score} for hit in results]

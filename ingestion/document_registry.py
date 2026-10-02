@@ -16,6 +16,17 @@ SET d.filename = $filename,
 RETURN d
 """
 
+REGISTER_PARTIAL_QUERY = """
+MERGE (d:Document {hash: $hash})
+SET d.filename = $filename,
+    d.status = 'partial',
+    d.ingested_at = datetime(),
+    d.entity_count = $entity_count,
+    d.relationship_count = $relationship_count,
+    d.failed_batch_count = $failed_batch_count
+RETURN d
+"""
+
 MARK_FAILED_QUERY = """
 MERGE (d:Document {hash: $hash})
 SET d.filename = $filename,
@@ -56,6 +67,14 @@ def register_document(file_hash: str, filename: str, entity_count: int, relation
         "relationship_count": relationship_count,
     })
     print(f"[registry] Registered '{filename}' as completed ({entity_count} entities, {relationship_count} relationships).")
+    
+def register_partial_document(file_hash: str, filename: str, entity_count: int, relationship_count: int, failed_batch_count: int):
+    neo4j_client.run_query(REGISTER_PARTIAL_QUERY, {
+        "hash": file_hash, "filename": filename,
+        "entity_count": entity_count, "relationship_count": relationship_count,
+        "failed_batch_count": failed_batch_count,
+    })
+    print(f"[registry] Registered '{filename}' as PARTIAL — {failed_batch_count} batch(es) failed permanently.")
 
 
 def mark_document_failed(file_hash: str, filename: str):

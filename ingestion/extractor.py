@@ -8,6 +8,8 @@ from config import GROQ_API_KEY, GROQ_MODEL,GEMINI_MODEL
 from schemas.entities import ExtractionResult, parser_extraction as parser
 from prompts.extraction_prompt import EXTRACTION_PROMPT
 from ingestion.batching import batch_chunks, format_batch_for_prompt
+from ingestion.batching import batch_chunks
+from ingestion.batch_runner import run_batches_parallel, retry_failed_batches
 
 
 
@@ -30,8 +32,7 @@ def extract_entities_from_document(chunks: list[str]) -> tuple[ExtractionResult,
     Returns (merged_result, permanently_failed_batches) — caller decides how
     to treat a document with some permanently failed batches (V3.1: mark as
     'partial' in the registry rather than silently calling it 'completed')."""
-    from ingestion.batching import batch_chunks
-    from ingestion.batch_runner import run_batches_parallel, retry_failed_batches
+
 
     batches = batch_chunks(chunks)
     print(f"[extractor] {len(chunks)} chunks grouped into {len(batches)} batch(es).")

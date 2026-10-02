@@ -1,22 +1,34 @@
+import uuid
 from graph.neo4j_client import neo4j_client
 from risk.ratios import extract_financial_metrics, compute_risk_score
+from risk.metrics_retriever import retrieve_metrics_context
 from schemas.risk import RiskScore
 
-WRITE_RISK_SCORE_QUERY = """
+WRITE_RISK_ASSESSMENT_QUERY = """
 MATCH (c:Entity {id: $company_id, type: 'Company'})
-SET c.risk_level = $risk_level,
-    c.debt_to_equity = $debt_to_equity,
-    c.current_ratio = $current_ratio,
-    c.net_margin = $net_margin,
-    c.risk_notes = $notes,
-    c.risk_scored_at = datetime()
-RETURN c
+MATCH (d:Document {hash: $document_hash})
+CREATE (r:RiskAssessment {
+    id: $assessment_id,
+    risk_level: $risk_level,
+    debt_to_equity: $debt_to_equity,
+    current_ratio: $current_ratio,
+    net_margin: $net_margin,
+    notes: $notes,
+    status: 'DRAFT',
+    created_at: datetime()
+})
+MERGE (c)-[:HAS_ASSESSMENT]->(r)
+MERGE (r)-[:BASED_ON]->(d)
+RETURN r
 """
 
 
-def write_risk_score_to_graph(score: RiskScore):
-    result = neo4j_client.run_query(WRITE_RISK_SCORE_QUERY, {
+def write_risk_assessment(score: RiskScore, document_hash: str) -> str:
+    assessment_id = str(uuid.uuid4())
+    result = neo4j_client.run_query(WRITE_RISK_ASSESSMENT_QUERY, {
+        "assessment_id": assessment_id,
         "company_id": score.company_id,
+        "document_hash": document_hash,
         "risk_level": score.risk_level,
         "debt_to_equity": score.debt_to_equity,
         "current_ratio": score.current_ratio,
@@ -24,17 +36,18 @@ def write_risk_score_to_graph(score: RiskScore):
         "notes": score.notes,
     })
     if not result:
-        print(f"[risk_agent] Warning: no Company node found for id '{score.company_id}' — score not attached.")
-        return
-    print(f"[risk_agent] {score.company_id} → risk_level={score.risk_level} "
-          f"(D/E={score.debt_to_equity}, CR={score.current_ratio}, margin={score.net_margin})")
+        print(f"[risk_agent] Warning: no Company/Document match for '{score.company_id}' — assessment not written.")
+        return None
+    print(f"[risk_agent] Wrote DRAFT RiskAssessment {assessment_id} for {score.company_id}: {score.risk_level}")
+    return assessment_id
 
 
-def run_risk_agent(full_document_text: str, company_id: str, company_name: str):
-    """Runs the full risk pass for one company mentioned in one document:
-    extract numeric metrics → compute ratios → write score to its Company node."""
+def run_risk_agent(company_id: str, company_name: str, document_hash: str):
+    """V3.1: uses targeted Qdrant retrieval instead of full_text, and creates
+    a new RiskAssessment node per run instead of overwriting the Company node
+    — so history/traceability across documents/versions is preserved."""
     print(f"[risk_agent] Scoring '{company_name}' ({company_id})...")
-    metrics = extract_financial_metrics(full_document_text, company_hint=company_name)
+    context = retrieve_metrics_context(document_hash)
+    metrics = extract_financial_metrics(context, company_hint=company_name)
     score = compute_risk_score(company_id, metrics)
-    write_risk_score_to_graph(score)
-    return score
+    return write_risk_assessment(score, document_hash)
