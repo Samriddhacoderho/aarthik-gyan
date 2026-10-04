@@ -5,6 +5,7 @@ from langchain_core.output_parsers import PydanticOutputParser
 from langchain_groq import ChatGroq
 from config import GROQ_API_KEY, GROQ_MODEL,GEMINI_MODEL
 
+from llm.provider import get_llm
 from schemas.entities import ExtractionResult, parser_extraction as parser
 from prompts.extraction_prompt import EXTRACTION_PROMPT
 from ingestion.batching import format_batch_for_prompt
@@ -18,6 +19,6 @@ def extract_entities_from_batch(batch: list[str]) -> ExtractionResult:
         input_variables=["text"],
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
-    chain = prompt | model | parser
+    chain = prompt | get_llm() | parser
     batch_text = format_batch_for_prompt(batch)
     return chain.invoke({"text": batch_text})

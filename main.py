@@ -68,9 +68,10 @@ if __name__ == "__main__":
     vector_store_client.verify_connection()
 
     # ingest("documents/Sample-Financial-Statements-1.pdf")
-    ingest("documents/NASDAQ_TSLA_2025.pdf")
+    # ingest("documents/NASDAQ_TSLA_2025.pdf")
+    ingest('documents/Sample-Accounting-Income-Statement-PDF-File.pdf')
 
-    ask("Compare the net income of all companies and give the count of highest net income")
+    ask("Summary of the document")
 
     neo4j_client.close()
 
