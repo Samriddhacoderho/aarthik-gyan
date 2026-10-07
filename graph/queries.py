@@ -56,5 +56,3 @@ def fetch_degree_centrality(limit: int = 15) -> list[dict]:
 
 def fetch_debt_ratio_history(company_id: str) -> list[dict]:
     return neo4j_client.run_query(DEBT_RATIOS_QUERY, {"company_id": company_id})
-
-#commit
