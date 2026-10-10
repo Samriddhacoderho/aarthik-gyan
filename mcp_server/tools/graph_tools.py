@@ -11,7 +11,6 @@ def register_graph_tools(mcp):
         profile = fetch_company_profile(company_id)
         if profile is None:
             return ToolError(error=f"No company found with id '{company_id}'.")
-        # created_at from Neo4j is a datetime object, not JSON-serializable as-is
         if profile.get("assessment_date") is not None:
             profile["assessment_date"] = str(profile["assessment_date"])
         return CompanyProfile(**profile)

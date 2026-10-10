@@ -45,7 +45,7 @@ def fetch_company_profile(company_id: str) -> dict | None:
 
 
 def fetch_connected_entities(company_id: str, hops: int = 2) -> list[dict]:
-    hops = max(1, min(hops, 3))  # guard against runaway traversals
+    hops = max(1, min(hops, 3)) 
     query = CONNECTED_ENTITIES_QUERY.replace("{hops}", str(hops))
     return neo4j_client.run_query(query, {"company_id": company_id})
 
