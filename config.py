@@ -25,9 +25,10 @@ GROQ_MODEL="qwen/qwen3.8-27b"
 GEMINI_MODEL="gemini-flash-latest"
 
 # Other Configuration
-MAX_EXTRACTION_WORKERS = 4
+MAX_EXTRACTION_WORKERS = 3
 METRICS_RETRIEVAL_TOP_K = 8
-
+LLM_TIMEOUT_SECONDS = 90
+EXTRACTION_CACHE_DIR = ".extraction_cache"
 
 if not NEO4J_URI or not NEO4J_USERNAME or not NEO4J_PASSWORD:
     raise ValueError("Missing Neo4j configuration. Please set NEO4J_URI, NEO4J_USERNAME, and NEO4J_PASSWORD in your .env file.")

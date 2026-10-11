@@ -39,21 +39,24 @@ def ingest(file_path: str):
         print(f"[main] After dedup: {len(result.entities)} entities.")
 
         write_extraction_to_graph(result, file_hash)
-        index_chunks(chunks, filename, file_hash)
+        # index_chunks(chunks, filename, file_hash)
 
         for entity in result.entities:
             if entity.type == "Company":
                 run_risk_agent(entity.id, entity.name, file_hash)
 
         # if failed_batches:
-        #     register_partial_document(file_hash, filename, len(result.entities), len(result.relationships), len(failed_batches))
+            # register_partial_document(file_hash, filename, len(result.entities), len(result.relationships), len(failed_batches))
         # else:
         register_document(file_hash, filename, len(result.entities), len(result.relationships))
 
         print("[main] Ingestion complete.")
     except Exception as e:
         print(f"[main] Ingestion failed: {e}")
-        mark_document_failed(file_hash, filename)
+        try:
+            mark_document_failed(file_hash, filename)
+        except Exception as registry_error:
+            print(f"[main] Also could not mark document failed: {registry_error}")
         raise
 
 
@@ -68,8 +71,8 @@ if __name__ == "__main__":
     vector_store_client.verify_connection()
 
     # ingest("documents/Sample-Financial-Statements-1.pdf")
-    # ingest("documents/NASDAQ_TSLA_2025.pdf")
-    ingest('documents/Sample-Accounting-Income-Statement-PDF-File.pdf')
+    ingest("documents/NASDAQ_TSLA_2025.pdf")
+    # ingest('documents/Sample-Accounting-Income-Statement-PDF-File.pdf')
 
     ask("Summary of the document")
 

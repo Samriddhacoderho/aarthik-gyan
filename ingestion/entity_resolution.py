@@ -1,21 +1,25 @@
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt
 from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
 
 from llm.provider import get_llm
 from schemas.entities import ExtractionResult, EntityResolutionResult,parser_entity_resolution as parser
 from prompts.entity_resolution_prompt import ENTITY_RESOLUTION_PROMPT
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_not_exception_type
+from llm.provider import get_extraction_llm, AllProvidersExhausted
 
-
-
-@retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=2, min=2, max=15))
+@retry(
+    stop=stop_after_attempt(2),
+    wait=wait_fixed(1),
+    retry=retry_if_not_exception_type(AllProvidersExhausted),
+    reraise=True,
+)
 def _classify_duplicates(entity_list_text: str) -> EntityResolutionResult:
     prompt = PromptTemplate(
         template=ENTITY_RESOLUTION_PROMPT,
         input_variables=["entities"],
         partial_variables={"format_instructions": parser.get_format_instructions()},
     )
-    chain = prompt | get_llm() | parser
+    chain = prompt | get_extraction_llm() | parser
     return chain.invoke({"entities": entity_list_text})
 
 

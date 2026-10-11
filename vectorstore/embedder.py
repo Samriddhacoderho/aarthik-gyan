@@ -1,26 +1,26 @@
-from langchain_huggingface import HuggingFaceEndpointEmbeddings
+from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.documents import Document
 
 from config import EMBEDDING_MODEL
 
 _model = None
 
+
 def get_embedder():
-    """Lazy-loaded singleton — avoids reloading the model on every call."""
+    """Lazy-loaded singleton. Runs locally via sentence-transformers: no API, no credits."""
     global _model
     if _model is None:
-        print(f"[embedder] Loading model...")
-        _model = HuggingFaceEndpointEmbeddings(model=EMBEDDING_MODEL)
+        print("[embedder] Loading local model (first run downloads ~90MB)...")
+        _model = HuggingFaceEmbeddings(
+            model_name=EMBEDDING_MODEL,
+            encode_kwargs={"normalize_embeddings": True, "batch_size": 64},
+        )
     return _model
 
 
 def embed_text(text: str) -> list[float]:
-    model = get_embedder()
-    return model.embed_query(text)
+    return get_embedder().embed_query(text)
 
 
 def embed_texts(documents: list[Document]) -> list[list[float]]:
-    """Batched embedding — much faster than calling embed_text in a loop."""
-    model = get_embedder()
-    embeddings = model.embed_documents([doc.page_content for doc in documents])
-    return embeddings
+    return get_embedder().embed_documents([doc.page_content for doc in documents])

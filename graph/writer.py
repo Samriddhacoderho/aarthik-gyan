@@ -1,37 +1,32 @@
 from graph.neo4j_client import neo4j_client
 from schemas.entities import ExtractionResult
 
-MERGE_ENTITY_QUERY = """
-MERGE (e:Entity {id: $id})
-SET e.name = $name, e.type = $type, e.description = $description
-WITH e
+WRITE_ENTITIES_QUERY = """
 MATCH (d:Document {hash: $document_hash})
+UNWIND $entities AS ent
+MERGE (e:Entity {id: ent.id})
+SET e.name = ent.name, e.type = ent.type, e.description = ent.description
 MERGE (d)-[:MENTIONS]->(e)
-RETURN e
 """
 
-MERGE_RELATIONSHIP_QUERY = """
-MATCH (a:Entity {id: $source_id})
-MATCH (b:Entity {id: $target_id})
-MERGE (a)-[r:RELATION {type: $type}]->(b)
-SET r.detail = $detail,
-    r.source_document = $document_hash
-RETURN r
+WRITE_RELATIONSHIPS_QUERY = """
+UNWIND $relationships AS rel
+MATCH (a:Entity {id: rel.source_id})
+MATCH (b:Entity {id: rel.target_id})
+MERGE (a)-[r:RELATION {type: rel.type}]->(b)
+SET r.detail = rel.detail, r.source_document = $document_hash
 """
 
 
 def write_extraction_to_graph(result: ExtractionResult, document_hash: str):
-    for entity in result.entities:
-        params = entity.model_dump()
-        params["document_hash"] = document_hash
-        neo4j_client.run_query(MERGE_ENTITY_QUERY, params)
-        print(f"[writer] Merged entity: {entity.id} ({entity.type})")
+    entities = [e.model_dump() for e in result.entities]
+    relationships = [r.model_dump() for r in result.relationships]
 
-    for rel in result.relationships:
-        try:
-            params = rel.model_dump()
-            params["document_hash"] = document_hash
-            neo4j_client.run_query(MERGE_RELATIONSHIP_QUERY, params)
-            print(f"[writer] Merged relationship: {rel.source_id} -{rel.type}-> {rel.target_id}")
-        except Exception as e:
-            print(f"[writer] Skipped relationship {rel.source_id}->{rel.target_id}: {e}")
+    if entities:
+        neo4j_client.run_query(WRITE_ENTITIES_QUERY, {"document_hash": document_hash, "entities": entities})
+        print(f"[writer] Merged {len(entities)} entities.")
+
+    if relationships:
+        neo4j_client.run_query(WRITE_RELATIONSHIPS_QUERY, {"document_hash": document_hash, "relationships": relationships})
+        print(f"[writer] Merged up to {len(relationships)} relationships "
+              f"(any pointing at a missing entity id are skipped).")
