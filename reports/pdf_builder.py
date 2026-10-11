@@ -10,8 +10,7 @@ from schemas.audit import ApprovalRecord
 REPORTS_DIR = "reports/output"
 
 
-def build_risk_report_pdf(company_name: str, company_id: str, report_text: str,
-                           final_score: dict, approval_record: ApprovalRecord) -> str:
+def build_risk_report_pdf(company_name: str, company_id: str, report_text: str,final_score: dict, approval_record: ApprovalRecord) -> str:
     os.makedirs(REPORTS_DIR, exist_ok=True)
     safe_name = company_id.replace("/", "_")
     file_path = os.path.join(REPORTS_DIR, f"risk_report_{safe_name}.pdf")
@@ -21,8 +20,7 @@ def build_risk_report_pdf(company_name: str, company_id: str, report_text: str,
     heading_style = ParagraphStyle("HeadingCustom", parent=styles["Heading2"], spaceBefore=14, spaceAfter=6)
     body_style = ParagraphStyle("BodyCustom", parent=styles["BodyText"], leading=16)
 
-    doc = SimpleDocTemplate(file_path, pagesize=letter,
-                             topMargin=0.75 * inch, bottomMargin=0.75 * inch)
+    doc = SimpleDocTemplate(file_path, pagesize=letter,topMargin=0.75 * inch, bottomMargin=0.75 * inch)
     elements = []
 
     elements.append(Paragraph(f"Risk Assessment Report — {company_name}", title_style))

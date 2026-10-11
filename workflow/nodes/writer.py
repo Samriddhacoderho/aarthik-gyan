@@ -25,7 +25,6 @@ RETURN r
 
 
 def writer_node(state: GraphState) -> dict:
-    # Writer only ever sees the FINAL, approved values — edited score wins if present
     final_score = state.get("human_edited_score") or state["risk_score"]
 
     print(f"[writer] Generating report for {state['company_name']} "

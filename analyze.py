@@ -28,6 +28,8 @@ def prompt_human(interrupt_payload: dict) -> dict:
         raw = input(f"  {field} [{interrupt_payload['risk_score'].get(field)}]: ").strip()
         if raw:
             edited[field] = raw
+        else:
+            edited[field] = interrupt_payload["risk_score"].get(field)
     notes = input("Reason for rejection/edit: ").strip()
     return {"decision": "reject", "edited_score": edited or None, "notes": notes}
 
