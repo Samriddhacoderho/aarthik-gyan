@@ -8,6 +8,7 @@ from workflow.state import GraphState
 from schemas.audit import ApprovalRecord
 from reports.pdf_builder import build_risk_report_pdf
 from graph.neo4j_client import neo4j_client
+from llm.text_utils import strip_think
 
 WRITE_APPROVAL_QUERY = """
 MATCH (c:Entity {id: $company_id, type: 'Company'})-[:HAS_ASSESSMENT]->(r:RiskAssessment)
@@ -45,6 +46,7 @@ def writer_node(state: GraphState) -> dict:
         "auditor_findings": "\n".join(f"- {f}" for f in state.get("auditor_findings", [])),
     })
 
+    report_text = strip_think(report_text)
     approved_at = datetime.now(timezone.utc).isoformat()
     decision = "APPROVED" if state["human_decision"] == "approve" else "REJECTED_FINALIZED"
 

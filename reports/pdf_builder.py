@@ -4,6 +4,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.lib.units import inch
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib import colors
+from xml.sax.saxutils import escape
 
 from schemas.audit import ApprovalRecord
 
@@ -23,11 +24,12 @@ def build_risk_report_pdf(company_name: str, company_id: str, report_text: str,f
     doc = SimpleDocTemplate(file_path, pagesize=letter,topMargin=0.75 * inch, bottomMargin=0.75 * inch)
     elements = []
 
-    elements.append(Paragraph(f"Risk Assessment Report — {company_name}", title_style))
+    elements.append(Paragraph(f"Risk Assessment Report — {escape(company_name)}", title_style))
     elements.append(Spacer(1, 12))
 
     # Report body — split on blank lines, treat lines ending ':' or short all-caps-ish lines as headings
     for block in report_text.split("\n\n"):
+        block = escape(block.strip())
         block = block.strip()
         if not block:
             continue
@@ -42,7 +44,7 @@ def build_risk_report_pdf(company_name: str, company_id: str, report_text: str,f
             elements.append(Paragraph(block.replace("\n", "<br/>"), body_style))
 
     elements.append(Spacer(1, 16))
-    elements.append(Paragraph("Approval & Audit Trail", heading_style))
+    elements.append(Paragraph("Approval &amp; Audit Trail", heading_style))
 
     audit_data = [
         ["Field", "Value"],
@@ -54,7 +56,7 @@ def build_risk_report_pdf(company_name: str, company_id: str, report_text: str,f
         ["Final current ratio", str(final_score.get("current_ratio"))],
         ["Final net margin", str(final_score.get("net_margin"))],
         ["Review iterations", str(approval_record.iteration_count)],
-        ["Analyst notes", approval_record.edit_notes or "None"],
+        ["Analyst notes", Paragraph(escape(approval_record.edit_notes or "None"), styles["BodyText"])],
     ]
     table = Table(audit_data, colWidths=[2.2 * inch, 4 * inch])
     table.setStyle(TableStyle([

@@ -57,3 +57,8 @@ htmlcov/
 .env
 .env.*
 !.env.example
+
+#Outputs
+.extraction_cache/
+documents/
+reports/output/

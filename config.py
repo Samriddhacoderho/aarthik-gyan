@@ -21,7 +21,7 @@ QDRANT_COLLECTION = "arthikgyaan_chunks"
 #Model Configuration
 EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_DIM = 384  
-GROQ_MODEL="qwen/qwen3.8-27b"
+GROQ_MODEL="openai/gpt-oss-20b"
 GEMINI_MODEL="gemini-flash-latest"
 
 # Other Configuration

@@ -16,10 +16,12 @@ def register_graph_tools(mcp):
         return CompanyProfile(**profile)
 
     @mcp.tool()
-    def get_connected_entities(company: str, hops: int = 2) -> list[ConnectedEntity]:
+    def get_connected_entities(company_id: str, hops: int = 2) -> list[ConnectedEntity]:
         """Returns entities connected to the given company within N hops
-        (max 3) — subsidiaries, suppliers, auditors, risk factors, etc."""
-        results = fetch_connected_entities(company, hops)
+        (max 3) — subsidiaries, suppliers, auditors, risk factors, etc.
+        company_id is the company's id (e.g. 'whitcombe_properties'); its exact
+        name is also accepted."""
+        results = fetch_connected_entities(company_id, hops)
         return [ConnectedEntity(**r) for r in results]
 
     @mcp.tool()

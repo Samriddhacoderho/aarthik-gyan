@@ -15,7 +15,10 @@ RETURN c.id AS id, c.name AS name, c.description AS description,
 """
 
 CONNECTED_ENTITIES_QUERY = """
-MATCH (c:Entity {id: $company_id})-[r:RELATION*1..{hops}]-(connected:Entity)
+MATCH (c:Entity)
+WHERE c.id = $company_id OR toLower(c.name) = toLower($company_id)
+MATCH (c)-[r:RELATION*1..{hops}]-(connected:Entity)
+WHERE connected <> c
 RETURN DISTINCT connected.id AS id, connected.name AS name, connected.type AS type,
        [rel in r | rel.type] AS relationship_path
 LIMIT 50

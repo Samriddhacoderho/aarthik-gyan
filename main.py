@@ -39,16 +39,16 @@ def ingest(file_path: str):
         print(f"[main] After dedup: {len(result.entities)} entities.")
 
         write_extraction_to_graph(result, file_hash)
-        # index_chunks(chunks, filename, file_hash)
+        index_chunks(chunks, filename, file_hash)
 
         for entity in result.entities:
             if entity.type == "Company":
                 run_risk_agent(entity.id, entity.name, file_hash)
 
-        # if failed_batches:
-            # register_partial_document(file_hash, filename, len(result.entities), len(result.relationships), len(failed_batches))
-        # else:
-        register_document(file_hash, filename, len(result.entities), len(result.relationships))
+        if failed_batches:
+            register_partial_document(file_hash, filename, len(result.entities), len(result.relationships), len(failed_batches))
+        else:
+            register_document(file_hash, filename, len(result.entities), len(result.relationships))
 
         print("[main] Ingestion complete.")
     except Exception as e:
@@ -69,11 +69,8 @@ def ask(question: str):
 if __name__ == "__main__":
     neo4j_client.verify_connection()
     vector_store_client.verify_connection()
-
-    # ingest("documents/Sample-Financial-Statements-1.pdf")
-    ingest("documents/NASDAQ_TSLA_2025.pdf")
-    # ingest('documents/Sample-Accounting-Income-Statement-PDF-File.pdf')
-
+    
+    ingest("documents/Brightwater_Industrial_Systems_FY2025_Annual_Report.pdf")
     ask("Summary of the document")
 
     neo4j_client.close()

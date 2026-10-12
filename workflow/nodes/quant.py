@@ -10,7 +10,13 @@ def quant_node(state: GraphState) -> dict:
     if state.get("human_notes"):
         print(f"[quant] Incorporating analyst notes from previous rejection: {state['human_notes']}")
 
-    run_risk_agent(state["company_id"], state["company_name"], state["document_hash"])
+    assessment_id = run_risk_agent(state["company_id"], state["company_name"], state["document_hash"])
+    if assessment_id is None:
+        raise RuntimeError(
+            f"Risk assessment was not written: no Company '{state['company_id']}' or "
+            f"Document with hash '{state['document_hash']}' exists in Neo4j. "
+            "Check COMPANY_ID / DOCUMENT_HASH in analyze.py."
+        )
 
     history = fetch_debt_ratio_history(state["company_id"])
     if not history:
