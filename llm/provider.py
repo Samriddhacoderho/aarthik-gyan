@@ -73,11 +73,11 @@ def _is_rate_limit(error: Exception) -> bool:
     return any(k in text for k in ("429", "rate limit", "rate_limit", "resource_exhausted", "quota"))
 
 
-def _failover_invoke(prompt_value):
+def _failover_invoke(prompt_value, max_rounds: int = MAX_ROUNDS):
     slots = _get_slots()
     last_error = None
 
-    for _ in range(MAX_ROUNDS):
+    for _ in range(max_rounds):
         with _state_lock:
             now = time.monotonic()
             ready = [s for s in slots if s.cooldown_until <= now]
@@ -111,9 +111,17 @@ def _failover_invoke(prompt_value):
                     slot.cooldown_until = time.monotonic() + cooldown
                 print(f"[llm] {slot.name} {kind} -> cooling {cooldown:.0f}s, trying next provider")
 
-    raise AllProvidersExhausted(f"All providers failed after {MAX_ROUNDS} round(s): {last_error}")
+    raise AllProvidersExhausted(f"All providers failed after {max_rounds} round(s): {last_error}")
 
 
-def get_extraction_llm():
-    """Cooldown-aware Groq -> Gemini router for high-volume extraction calls."""
-    return RunnableLambda(_failover_invoke)
+def get_extraction_llm(max_rounds: int | None = None):
+    """Cooldown-aware Groq -> Gemini router for every plain prompt | llm | parser chain.
+    max_rounds=1 means exactly: try Groq, then Gemini, then fail. Higher values let the router
+    wait out a rate-limit cooldown and try again (good for big batch jobs)."""
+    rounds = max_rounds or MAX_ROUNDS
+
+    def _call(prompt_value):
+        return _failover_invoke(prompt_value, rounds)
+
+    return RunnableLambda(_call)
+

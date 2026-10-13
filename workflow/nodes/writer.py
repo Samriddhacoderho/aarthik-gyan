@@ -1,14 +1,14 @@
+import re                        
 from datetime import datetime, timezone
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-
-from llm.provider import get_llm
 from prompts.writer_prompt import WRITER_PROMPT
 from workflow.state import GraphState
 from schemas.audit import ApprovalRecord
 from reports.pdf_builder import build_risk_report_pdf
 from graph.neo4j_client import neo4j_client
 from llm.text_utils import strip_think
+from llm.provider import get_extraction_llm
 
 WRITE_APPROVAL_QUERY = """
 MATCH (c:Entity {id: $company_id, type: 'Company'})-[:HAS_ASSESSMENT]->(r:RiskAssessment)
@@ -35,7 +35,7 @@ def writer_node(state: GraphState) -> dict:
         "company_name", "risk_level", "debt_to_equity", "current_ratio",
         "net_margin", "human_notes", "auditor_findings"
     ])
-    chain = prompt | get_llm() | StrOutputParser()
+    chain = prompt | get_extraction_llm(max_rounds=2) | StrOutputParser()
     report_text = chain.invoke({
         "company_name": state["company_name"],
         "risk_level": final_score.get("risk_level"),

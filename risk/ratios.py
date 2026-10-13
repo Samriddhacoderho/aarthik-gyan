@@ -1,16 +1,17 @@
 from langchain_google_genai import ChatGoogleGenerativeAI
-from tenacity import retry, stop_after_attempt, wait_exponential
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from llm.provider import get_extraction_llm
 from schemas.risk import FinancialMetrics, metrics_parser, RiskScore
 from prompts.metrics_extraction_prompt import METRICS_EXTRACTION_PROMPT
 from config import GEMINI_MODEL, GROQ_MODEL
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_not_exception_type
+from llm.provider import get_extraction_llm, AllProvidersExhausted
 
-@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=2, min=2, max=20))
+
+@retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=1, min=1, max=5),
+       retry=retry_if_not_exception_type(AllProvidersExhausted), reraise=True)
 def extract_financial_metrics(text: str, company_hint: str) -> FinancialMetrics:
-    # model = ChatGroq(model=GROQ_MODEL, temperature=0)
-    # model = ChatGoogleGenerativeAI(model=GEMINI_MODEL)
     prompt = PromptTemplate(
         template=METRICS_EXTRACTION_PROMPT,
         input_variables=["text"],
@@ -22,7 +23,9 @@ def extract_financial_metrics(text: str, company_hint: str) -> FinancialMetrics:
         if not result.company_name:
             result.company_name = company_hint
         return result
-    except Exception as e:
+    except AllProvidersExhausted:
+        raise   # both LLMs failed: a failed call must fail loudly, not become an empty score
+    except Exception as e:  # e.g. unparseable output
         print(f"[ratios] Metrics extraction failed: {e}")
         return FinancialMetrics(company_name=company_hint)
 
