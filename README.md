@@ -1,12 +1,14 @@
 # Aarthik Gyan
 
 Aarthik Gyan is a Python-based financial intelligence and knowledge graph
-application. It ingests financial PDF documents, extracts structured entities
-and relationships, stores them in Neo4j, indexes document chunks in Qdrant, and
-answers questions using routed graph and semantic retrieval.
+application. It ingests financial PDF documents, extracts and resolves entities,
+stores structured knowledge in Neo4j, indexes document chunks in Qdrant, and
+answers questions through routed graph and semantic retrieval. Version 3 adds
+parallel extraction, provider fallback, an auditable LangGraph workflow with
+human review, PDF reporting, and an MCP server.
 
-> **Status:** Version 2.0 implementation complete; final testing and continued
-> improvements are in progress.
+> **Status:** Version 3.0 implementation complete; production hardening and
+> broader testing remain ongoing.
 
 ## What Is Achieved
 
@@ -25,6 +27,14 @@ The current implementation provides the following end-to-end workflow:
 11. Generate a final natural-language answer from the retrieved results.
 12. Extract financial metrics, calculate risk ratios, and write company risk scores back to Neo4j.
 13. Retry LLM operations with exponential backoff for transient failures.
+14. Run extraction batches concurrently with bounded workers, rate limiting,
+	caching, and retry handling.
+15. Resolve duplicate or equivalent entities before graph persistence.
+16. Use configurable Gemini/Groq providers with fallback handling.
+17. Run an Auditor -> Quant -> Human-in-the-Loop -> Writer workflow with
+	checkpointing and iterative review.
+18. Generate approved financial risk reports as PDF files.
+19. Expose graph, retrieval, and risk operations through a FastMCP HTTP server.
 
 The sample documents currently included in the repository are:
 
@@ -61,6 +71,10 @@ LLM retrieval router
 	|
 	v
 Answer generation
+
+Risk analysis workflow:
+
+Auditor -> Quant -> Human review -> Writer -> PDF report and Neo4j update
 ```
 
 ## Retrieval Modes
@@ -106,17 +120,27 @@ the risk-analysis workflow.
 ├── ingestion/
 │   ├── __init__.py
 │   ├── batching.py             # Chunk batching helpers
+│   ├── batch_runner.py          # Parallel batch execution and retries
 │   ├── document_registry.py    # Hash and ingestion-status tracking
+│   ├── entity_resolution.py    # Entity deduplication and resolution
+│   ├── extractor_shared.py     # Shared extraction logic
 │   ├── extractor.py            # Batched LLM extraction
 │   └── pdf_parser.py           # PDF loading and chunking
+├── llm/
+│   ├── provider.py              # Provider selection and fallback
+│   ├── rate_limiter.py          # Bounded extraction concurrency
+│   └── text_utils.py            # LLM response cleanup
 ├── prompts/                    # Extraction, Cypher, and answer prompts
 ├── retrieval/
 │   ├── graph_retrieval.py      # Neo4j retrieval
 │   ├── router.py               # GRAPH/VECTOR/BOTH routing
 │   └── vector_retriever.py     # Semantic retrieval
 ├── risk/
+│   ├── metrics_retriever.py     # Context retrieval for metrics
 │   ├── ratios.py               # Metric extraction and ratio calculation
 │   └── risk_agent.py           # Risk scoring and graph persistence
+├── reports/
+│   └── pdf_builder.py           # Approved risk-report PDF generation
 ├── schemas/
 │   ├── __init__.py
 │   ├── entities.py             # Entity and relationship models
@@ -125,6 +149,15 @@ the risk-analysis workflow.
 │   ├── embedder.py             # Hugging Face embeddings
 │   ├── indexer.py              # Qdrant indexing and search
 │   └── qdrant_client.py        # Qdrant connection and collection setup
+├── workflow/
+│   ├── nodes/                   # Auditor, quant, HITL, and writer nodes
+│   ├── mcp_client.py            # MCP tool integration
+│   ├── state.py                 # Workflow state schema
+│   └── workflow.py              # LangGraph workflow definition
+├── mcp_server/
+│   ├── server.py                # FastMCP HTTP server
+│   └── tools/                   # Graph, retrieval, and risk tools
+├── analyze.py                   # Interactive risk-analysis workflow
 ├── config.py                   # Environment-backed configuration
 ├── main.py                     # Ingestion and question-answering entry point
 ├── requirements.txt
@@ -139,6 +172,7 @@ the risk-analysis workflow.
 - A Groq API key
 - A Qdrant instance, local or hosted
 - A Hugging Face token for the configured embedding provider
+- Node.js or an MCP-compatible client if using the MCP tools
 - Access to the sample PDF files, or your own financial PDFs
 
 ## Setup
@@ -173,10 +207,23 @@ the risk-analysis workflow.
 	 ```
 
 The entry point verifies Neo4j and Qdrant connectivity, skips a document if its
-hash was already registered, ingests `documents/NASDAQ_TSLA_2025.pdf`, indexes
-its chunks, calculates risk scores for extracted companies, and asks a question
-using routed retrieval. Change the document path and question in `main.py` to
-process another file.
+hash was already registered, ingests the configured PDF, runs parallel
+extraction and entity resolution, indexes its chunks, calculates risk scores,
+and asks a question using routed retrieval.
+
+To run the human-reviewed risk workflow:
+
+```bash
+python analyze.py
+```
+
+To start the MCP server:
+
+```bash
+python mcp_server/server.py
+```
+
+It listens on `http://127.0.0.1:8000` using FastMCP HTTP transport.
 
 ## Configuration
 
@@ -185,7 +232,9 @@ time. The default Qdrant collection is `arthikgyaan_chunks`. The configured
 embedding model is `all-MiniLM-L6-v2` with an embedding dimension of `384`.
 
 The extraction path currently uses Groq, while answer generation and retrieval
-routing use Gemini. Provider selection can be changed in the relevant modules.
+routing use Gemini. Provider selection and fallback behavior are centralized in
+`llm/provider.py`. Extraction uses up to three workers and caches completed
+batches under `.extraction_cache`.
 
 ## Dependencies
 
@@ -208,8 +257,10 @@ clean-environment setup before committing.
 - Qdrant must be reachable before the application starts.
 - Source provenance is stored for vector chunks but is not yet fully attached
 	to every graph entity and relationship.
-- Automated tests, migrations, observability, and production deployment
-	configuration are still incomplete.
+- Human review is currently an interactive terminal workflow.
+- The MCP server binds to localhost by default and still needs production
+  authentication and deployment configuration.
+- Automated tests, migrations, and observability are still incomplete.
 
 ## Progress Tracked In Git
 
@@ -223,16 +274,29 @@ clean-environment setup before committing.
 | `657e50a` | Qdrant vector indexing and retrieval work added. |
 | `c9d594b` | Version 2 final testing milestone recorded. |
 | `daf1980` | Version 2 implementation completed. |
+| `d594175` | README updated before the Version 3 work. |
+| `f08db39` | Version 3 parallel batch-request work started. |
+| `9fced56` | Continued Version 3 workflow development. |
+| `38e0f3a` | Version 3.1 testing milestone recorded. |
+| `f498854` | Circular dependency fixes completed. |
+| `07a7e5e` | Version 3.1 implementation completed. |
+| `f6689c8` | Version 3.2 development started. |
+| `7bbdcd9` | Version 3.2 daily progress milestone. |
+| `b510e79` | Version 3.2 implementation completed. |
+| `aa9a82d` | Version 3.0 full implementation completed; testing remained. |
+| `06f48be` | Version 3 fixes applied. |
+| `2bd0ca9` | Additional Version 3 fixes applied. |
+| `52e81ce` | Version 3 fully functioning milestone. |
+| `f3f79c1` | Final cleanup before Version 3 completion. |
 
 ## Next Development Priorities
 
-1. Add automated tests for parsing, batching, schema validation, deduplication,
-   retrieval routing, and risk calculations.
+1. Add automated tests for the parallel batch runner, entity resolution,
+   workflow routing, MCP tools, and report generation.
 2. Add document provenance to graph entities and relationships.
-3. Improve table extraction and financial metric normalization.
-4. Add query safety controls and stronger validation for generated Cypher.
-5. Replace hard-coded demo settings with a CLI or API interface.
-6. Add observability, deployment documentation, and production configuration.
+3. Add authentication and deployment guidance for the MCP server.
+4. Improve table extraction and financial metric normalization.
+5. Add query safety controls, observability, and production configuration.
 
 ## Maintainer
 
