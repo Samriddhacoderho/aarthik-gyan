@@ -15,6 +15,15 @@ SET d.filename = $filename, d.status = 'processing'
 RETURN d
 """
 
+def pick_primary_company(result):
+    """The company the document is about is the Company entity with the most relationships."""
+    companies = {e.id: e for e in result.entities if e.type == "Company"}
+    counts = {cid: 0 for cid in companies}
+    for r in result.relationships:
+        if r.source_id in counts: counts[r.source_id] += 1
+        if r.target_id in counts: counts[r.target_id] += 1
+    return companies[max(counts, key=counts.get)] if counts else None
+
 def ingest(file_path: str):
     file_hash = compute_file_hash(file_path)
     filename = file_path.split("/")[-1]
@@ -41,9 +50,9 @@ def ingest(file_path: str):
         write_extraction_to_graph(result, file_hash)
         index_chunks(chunks, filename, file_hash)
 
-        for entity in result.entities:
-            if entity.type == "Company":
-                run_risk_agent(entity.id, entity.name, file_hash)
+        primary = pick_primary_company(result)
+        if primary:
+            run_risk_agent(primary.id, primary.name, file_hash)
 
         if failed_batches:
             register_partial_document(file_hash, filename, len(result.entities), len(result.relationships), len(failed_batches))

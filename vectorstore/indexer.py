@@ -1,5 +1,5 @@
 import uuid
-from qdrant_client.models import PointStruct
+from qdrant_client.models import FilterSelector, PointStruct
 from vectorstore.qdrant_client import vector_store_client
 from vectorstore.embedder import embed_texts
 from config import QDRANT_COLLECTION
@@ -8,34 +8,33 @@ from qdrant_client.models import Filter, FieldCondition, MatchValue
 
 
 def index_chunks(chunks: list[Document], filename: str, file_hash: str, batch_size: int = 64):
-    """Embeds all chunks, then upserts into Qdrant in smaller batches —
-    a single upsert of hundreds of points can exceed the client's write timeout
-    over a network connection to a cloud cluster."""
+    """Idempotent: clears this document's old points, then upserts with deterministic ids,
+    so re-running ingestion never creates duplicate chunks."""
     if not chunks:
         return
 
-    embeddings = embed_texts(chunks)
+    vector_store_client.client.delete(
+        collection_name=QDRANT_COLLECTION,
+        points_selector=FilterSelector(filter=Filter(
+            must=[FieldCondition(key="document_hash", match=MatchValue(value=file_hash))]
+        )),
+    )
 
+    embeddings = embed_texts(chunks)
     points = [
         PointStruct(
-            id=str(uuid.uuid4()),
+            id=str(uuid.uuid5(uuid.NAMESPACE_URL, f"{file_hash}:{i}")),
             vector=embedding,
-            payload={
-                "text": chunk.page_content,
-                "filename": filename,
-                "document_hash": file_hash,
-                "chunk_index": i,
-            },
+            payload={"text": chunk.page_content, "filename": filename,
+                     "document_hash": file_hash, "chunk_index": i},
         )
         for i, (chunk, embedding) in enumerate(zip(chunks, embeddings))
     ]
 
     total = len(points)
     for start in range(0, total, batch_size):
-        batch = points[start:start + batch_size]
-        vector_store_client.client.upsert(collection_name=QDRANT_COLLECTION, points=batch)
+        vector_store_client.client.upsert(collection_name=QDRANT_COLLECTION, points=points[start:start + batch_size])
         print(f"[indexer] Upserted {min(start + batch_size, total)}/{total} points into Qdrant.")
-
     print(f"[indexer] Finished indexing {total} chunks from '{filename}' into Qdrant.")
     
     

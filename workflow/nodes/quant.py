@@ -10,7 +10,7 @@ def quant_node(state: GraphState) -> dict:
     if state.get("human_notes"):
         print(f"[quant] Incorporating analyst notes from previous rejection: {state['human_notes']}")
 
-    assessment_id = run_risk_agent(state["company_id"], state["company_name"], state["document_hash"])
+    assessment_id = run_risk_agent(state["company_id"], state["company_name"], state["document_hash"], force=iteration > 1)
     if assessment_id is None:
         raise RuntimeError(
             f"Risk assessment was not written: no Company '{state['company_id']}' or "
