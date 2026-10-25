@@ -1,5 +1,5 @@
 from risk.risk_agent import run_risk_agent
-from graph.queries import fetch_debt_ratio_history
+from graph.queries import fetch_assessment_for_document
 from workflow.state import GraphState
 
 
@@ -15,14 +15,14 @@ def quant_node(state: GraphState) -> dict:
         raise RuntimeError(
             f"Risk assessment was not written: no Company '{state['company_id']}' or "
             f"Document with hash '{state['document_hash']}' exists in Neo4j. "
-            "Check COMPANY_ID / DOCUMENT_HASH in analyze.py."
+            "Run main.py to ingest the document first."
         )
 
-    history = fetch_debt_ratio_history(state["company_id"])
-    if not history:
-        raise RuntimeError(f"No risk assessment found for {state['company_id']} after scoring.")
+    # Read back the assessment for THIS company on THIS document, not "the newest one".
+    latest = fetch_assessment_for_document(state["company_id"], state["document_hash"])
+    if latest is None:
+        raise RuntimeError(f"No risk assessment found for {state['company_id']} on this document after scoring.")
 
-    latest = history[0]
     score = {
         "debt_to_equity": latest.get("debt_to_equity"),
         "current_ratio": latest.get("current_ratio"),

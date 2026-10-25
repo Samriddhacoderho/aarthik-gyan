@@ -1,13 +1,52 @@
+import asyncio
+import sys
 import uuid
+
 from langgraph.types import Command
 from workflow.workflow import build_workflow
 from graph.neo4j_client import neo4j_client
 from vectorstore.qdrant_client import vector_store_client
-import asyncio
 
-COMPANY_ID = "whitcombe_properties"
-COMPANY_NAME = "Whitcombe Properties LLC"
-DOCUMENT_HASH = "41dd2e01324da2ef95aefa07b1d0f58680fab74358fae65f8ab1090fac7ea294"
+# Which ingested document to analyze. Override on the command line:
+#   python analyze.py "Some_Other_Report.pdf"
+DOCUMENT_FILENAME = "Brightwater_Industrial_Systems_FY2025_Annual_Report.pdf"
+
+FIND_DOCUMENT_QUERY = """
+MATCH (d:Document {filename: $filename})
+WHERE d.status IN ['completed', 'partial']
+RETURN d.hash AS hash
+ORDER BY d.ingested_at DESC
+LIMIT 1
+"""
+
+# Same rule main.py uses (pick_primary_company): the Company with the most relationships
+# stated in THIS document. Ties are broken by id so the result is always the same.
+FIND_PRIMARY_COMPANY_QUERY = """
+MATCH (d:Document {hash: $hash})-[:MENTIONS]->(c:Entity {type: 'Company'})
+OPTIONAL MATCH (c)-[r:RELATION]-()
+WHERE r.source_document = $hash
+WITH c, count(r) AS degree
+RETURN c.id AS id, c.name AS name, degree
+ORDER BY degree DESC, c.id
+LIMIT 1
+"""
+
+
+def resolve_target(filename: str) -> tuple[str, str, str]:
+    """Returns (company_id, company_name, document_hash) for an ingested document,
+    so nothing has to be hard-coded or kept in sync by hand."""
+    docs = neo4j_client.run_query(FIND_DOCUMENT_QUERY, {"filename": filename})
+    if not docs:
+        raise SystemExit(f"'{filename}' has not been ingested yet (or failed). Run main.py first.")
+    document_hash = docs[0]["hash"]
+
+    companies = neo4j_client.run_query(FIND_PRIMARY_COMPANY_QUERY, {"hash": document_hash})
+    if not companies:
+        raise SystemExit(f"No Company entity was found for '{filename}'.")
+
+    company = companies[0]
+    print(f"[analyze] Target: {company['name']} ({company['id']}) from '{filename}'")
+    return company["id"], company["name"], document_hash
 
 
 def prompt_human(interrupt_payload: dict) -> dict:
@@ -44,14 +83,15 @@ def prompt_human(interrupt_payload: dict) -> dict:
     return {"decision": "reject", "edited_score": edited, "notes": notes}
 
 
-async def run_analysis():
+async def run_analysis(filename: str = DOCUMENT_FILENAME):
+    company_id, company_name, document_hash = resolve_target(filename)
     workflow = build_workflow()
     thread_config = {"configurable": {"thread_id": str(uuid.uuid4())}}
 
     initial_state = {
-        "company_id": COMPANY_ID,
-        "company_name": COMPANY_NAME,
-        "document_hash": DOCUMENT_HASH,
+        "company_id": company_id,
+        "company_name": company_name,
+        "document_hash": document_hash,
         "iteration": 0,
         "max_iterations": 3,
     }
@@ -69,4 +109,4 @@ async def run_analysis():
 if __name__ == "__main__":
     neo4j_client.verify_connection()
     vector_store_client.verify_connection()
-    asyncio.run(run_analysis())
+    asyncio.run(run_analysis(sys.argv[1] if len(sys.argv) > 1 else DOCUMENT_FILENAME))

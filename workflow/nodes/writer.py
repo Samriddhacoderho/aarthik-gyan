@@ -1,4 +1,3 @@
-import re                        
 from datetime import datetime, timezone
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
@@ -10,9 +9,10 @@ from graph.neo4j_client import neo4j_client
 from llm.text_utils import strip_think
 from llm.provider import get_extraction_llm
 
+# Stamps the assessment for THIS company on THIS document (not "the newest one").
 WRITE_APPROVAL_QUERY = """
-MATCH (c:Entity {id: $company_id, type: 'Company'})-[:HAS_ASSESSMENT]->(r:RiskAssessment)
-WITH r ORDER BY r.created_at DESC LIMIT 1
+MATCH (:Entity {id: $company_id, type: 'Company'})-[:HAS_ASSESSMENT]->(r:RiskAssessment)
+      -[:BASED_ON]->(:Document {hash: $document_hash})
 SET r.status = $decision,
     r.approved_by = $approved_by,
     r.approved_at = datetime($approved_at),
@@ -21,7 +21,7 @@ SET r.status = $decision,
     r.final_net_margin = $net_margin,
     r.final_risk_level = $risk_level,
     r.edit_notes = $edit_notes
-RETURN r
+RETURN r.id AS id
 """
 
 
@@ -51,8 +51,9 @@ def writer_node(state: GraphState) -> dict:
     decision = "APPROVED" if state["human_decision"] == "approve" else "REJECTED_FINALIZED"
 
     # Write audit trail back to the graph FIRST (source of truth), then generate the PDF
-    neo4j_client.run_query(WRITE_APPROVAL_QUERY, {
+    updated = neo4j_client.run_query(WRITE_APPROVAL_QUERY, {
         "company_id": state["company_id"],
+        "document_hash": state["document_hash"],
         "decision": decision,
         "approved_by": "analyst",
         "approved_at": approved_at,
@@ -62,6 +63,8 @@ def writer_node(state: GraphState) -> dict:
         "risk_level": final_score.get("risk_level"),
         "edit_notes": state.get("human_notes"),
     })
+    if not updated:
+        raise RuntimeError("No risk assessment matched this company and document; the decision was NOT recorded.")
     print(f"[writer] Audit trail written to graph: {decision} by analyst at {approved_at}")
 
     approval_record = ApprovalRecord(

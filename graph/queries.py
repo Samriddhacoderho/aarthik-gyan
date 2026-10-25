@@ -41,6 +41,15 @@ RETURN r.debt_to_equity AS debt_to_equity, r.current_ratio AS current_ratio,
 ORDER BY r.created_at DESC
 """
 
+# The assessment for ONE company on ONE document. Used by the workflow so it never
+# picks up (or approves) an assessment that belongs to a different year's report.
+ASSESSMENT_FOR_DOCUMENT_QUERY = """
+MATCH (:Entity {id: $company_id, type: 'Company'})-[:HAS_ASSESSMENT]->(r:RiskAssessment)
+      -[:BASED_ON]->(:Document {hash: $document_hash})
+RETURN r.id AS assessment_id, r.debt_to_equity AS debt_to_equity, r.current_ratio AS current_ratio,
+       r.net_margin AS net_margin, r.risk_level AS risk_level, r.notes AS notes, r.status AS status
+"""
+
 
 def fetch_company_profile(company_id: str) -> dict | None:
     results = neo4j_client.run_query(COMPANY_PROFILE_QUERY, {"company_id": company_id})
@@ -48,7 +57,7 @@ def fetch_company_profile(company_id: str) -> dict | None:
 
 
 def fetch_connected_entities(company_id: str, hops: int = 2) -> list[dict]:
-    hops = max(1, min(hops, 3)) 
+    hops = max(1, min(hops, 3))
     query = CONNECTED_ENTITIES_QUERY.replace("{hops}", str(hops))
     return neo4j_client.run_query(query, {"company_id": company_id})
 
@@ -59,3 +68,8 @@ def fetch_degree_centrality(limit: int = 15) -> list[dict]:
 
 def fetch_debt_ratio_history(company_id: str) -> list[dict]:
     return neo4j_client.run_query(DEBT_RATIOS_QUERY, {"company_id": company_id})
+
+
+def fetch_assessment_for_document(company_id: str, document_hash: str) -> dict | None:
+    rows = neo4j_client.run_query(ASSESSMENT_FOR_DOCUMENT_QUERY,{"company_id": company_id, "document_hash": document_hash})
+    return rows[0] if rows else None
