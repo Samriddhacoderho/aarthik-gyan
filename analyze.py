@@ -1,8 +1,10 @@
 import asyncio
+import math
 import sys
 import uuid
 
 from langgraph.types import Command
+from workflow.review import describe_event
 from workflow.workflow import build_workflow
 from graph.neo4j_client import neo4j_client
 from vectorstore.qdrant_client import vector_store_client
@@ -31,6 +33,9 @@ ORDER BY degree DESC, c.id
 LIMIT 1
 """
 
+NUMBER_FIELDS = ("debt_to_equity", "current_ratio", "net_margin")
+LEVELS = ("LOW", "MEDIUM", "HIGH", "UNKNOWN")
+
 
 def resolve_target(filename: str) -> tuple[str, str, str]:
     """Returns (company_id, company_name, document_hash) for an ingested document,
@@ -49,42 +54,113 @@ def resolve_target(filename: str) -> tuple[str, str, str]:
     return company["id"], company["name"], document_hash
 
 
-def prompt_human(interrupt_payload: dict) -> dict:
-    print(f"Human Review Required — {interrupt_payload['company_name']}")
-    print("=" * 60)
-    print("\nAuditor findings:")
-    for f in interrupt_payload["auditor_findings"]:
-        print(f"  - {f}")
-    print(f"\nProposed risk score: {interrupt_payload['risk_score']}")
-    print(f"(Review iteration {interrupt_payload['iteration']})\n")
+def _show_score(label: str, score: dict) -> None:
+    show = lambda v: "n/a" if v is None else v
+    print(f"{label}")
+    print(f"    risk level      : {score.get('risk_level')}")
+    print(f"    debt-to-equity  : {show(score.get('debt_to_equity'))}")
+    print(f"    current ratio   : {show(score.get('current_ratio'))}")
+    print(f"    net margin      : {show(score.get('net_margin'))}")
+    for note in score.get("notes") or []:
+        print(f"      - {note}")
 
-    decision = input("Approve this assessment? (y/n): ").strip().lower()
-    if decision == "y":
-        return {"decision": "approve", "edited_score": None, "notes": input("Any notes? (optional): ")}
 
-    print("Enter corrected values (leave blank to keep as-is):")
-    current = interrupt_payload["risk_score"]
+def _ask_required(prompt: str) -> str:
+    while True:
+        text = input(prompt).strip()
+        if text:
+            return text
+        print("This cannot be empty: it goes into the audit trail.")
+
+
+def _ask_overrides(current: dict) -> tuple[dict, str | None]:
+    """Asks for corrected numbers. Blank = keep the current value. Returns (changed_fields, risk_level)."""
+    print("Type the corrected values. Press Enter to keep the value in brackets.")
     edited = {}
-    for field in ("risk_level", "debt_to_equity", "current_ratio", "net_margin"):
+    for field in NUMBER_FIELDS:
         while True:
-            raw = input(f"  {field} [{current.get(field)}]: ").strip()
+            raw = input(f"  {field} [{current.get(field)}]: ").strip().replace(",", "")
             if not raw:
-                edited[field] = current.get(field)
-                break
-            if field == "risk_level":
-                edited[field] = raw.upper()
                 break
             try:
-                edited[field] = float(raw)
-                break
+                value = float(raw)
             except ValueError:
                 print(f"    '{raw}' is not a number, try again.")
-    notes = input("Reason for rejection/edit: ").strip()
-    return {"decision": "reject", "edited_score": edited, "notes": notes}
+                continue
+            if not math.isfinite(value):
+                print("    Please type a normal number.")
+                continue
+            if value != current.get(field):
+                edited[field] = value
+            break
+
+    level = None
+    while True:
+        raw = input("  risk level (Enter = recalculate from the numbers; or LOW/MEDIUM/HIGH): ").strip().upper()
+        if not raw:
+            break
+        if raw in LEVELS:
+            level = raw
+            break
+        print(f"    Choose one of {', '.join(LEVELS)}, or press Enter.")
+    return edited, level
+
+
+def prompt_human(payload: dict) -> dict:
+    current = payload.get("final_score") or payload["risk_score"]
+    reruns_left = payload.get("reruns_left", 0)
+
+    print()
+    print("=" * 64)
+    print(f"Human Review Required: {payload['company_name']}   (scoring round {payload['iteration']})")
+    print("=" * 64)
+    print("\nAuditor findings:")
+    for finding in payload["auditor_findings"]:
+        print(f"  - {finding}")
+
+    print()
+    _show_score("Score calculated by the system:", payload["risk_score"])
+    if payload.get("final_score"):
+        print()
+        _show_score(">>> YOUR OVERRIDE, waiting for your confirmation:", payload["final_score"])
+
+    if payload.get("review_history"):
+        print("\nReview so far:")
+        for event in payload["review_history"]:
+            print(f"  [{event['at'][:19].replace('T', ' ')}] {event.get('reviewer')}: {describe_event(event)}")
+
+    print("\nWhat do you want to do?")
+    print("  [a] Approve what is shown above")
+    print("  [o] Override: type corrected numbers (the risk level is recalculated)")
+    if reruns_left > 0:
+        print(f"  [r] Re-run the scoring with a hint for the system ({reruns_left} re-run(s) left)")
+
+    while True:
+        choice = input("Your choice: ").strip().lower()
+
+        if choice == "a":
+            return {"action": "approve", "notes": input("Any notes? (optional): ").strip()}
+
+        if choice == "o":
+            edited, level = _ask_overrides(current)
+            if not edited and not level:
+                print("Nothing was changed. Pick again.")
+            reason = _ask_required("  Reason for the override (required): ")
+            return {"action": "override", "edited_score": edited, "risk_level": level, "notes": reason}
+
+        if choice == "r" and reruns_left > 0:
+            print("Tell the system where to look or what was wrong, for example:")
+            print('  "current assets and current liabilities are on the consolidated balance sheet"')
+            hint = _ask_required("  Hint (required): ")
+            return {"action": "rerun", "notes": hint}
+
+        print("Please type a, o" + (" or r." if reruns_left > 0 else "."))
 
 
 async def run_analysis(filename: str = DOCUMENT_FILENAME):
     company_id, company_name, document_hash = resolve_target(filename)
+    reviewer = input("Your name for the audit trail [analyst]: ").strip() or "analyst"
+
     workflow = build_workflow()
     thread_config = {"configurable": {"thread_id": str(uuid.uuid4())}}
 
@@ -92,6 +168,9 @@ async def run_analysis(filename: str = DOCUMENT_FILENAME):
         "company_id": company_id,
         "company_name": company_name,
         "document_hash": document_hash,
+        "reviewer": reviewer,
+        "review_history": [],
+        "final_score": None,
         "iteration": 0,
         "max_iterations": 3,
     }
@@ -102,8 +181,14 @@ async def run_analysis(filename: str = DOCUMENT_FILENAME):
         human_response = prompt_human(result["__interrupt__"][0].value)
         result = await workflow.ainvoke(Command(resume=human_response), config=thread_config)
 
+    record = result.get("approval_record") or {}
     print(f"\n[analyze] Done. Report at: {result.get('final_report_path')}")
-    print(f"[analyze] Approval record: {result.get('approval_record')}")
+    print(f"[analyze] Decision: {record.get('decision')} by {record.get('approved_by')}"
+          f"{' (numbers set by the analyst)' if record.get('overridden') else ''}")
+    print(f"[analyze] Final score: {record.get('final_score')}")
+    print("[analyze] Review history:")
+    for event in record.get("review_history", []):
+        print(f"    {event['at'][:19].replace('T', ' ')}  {event.get('reviewer')}: {describe_event(event)}")
 
 
 if __name__ == "__main__":

@@ -11,15 +11,15 @@ from llm.provider import get_extraction_llm, AllProvidersExhausted
 
 @retry(stop=stop_after_attempt(2), wait=wait_exponential(multiplier=1, min=1, max=5),
        retry=retry_if_not_exception_type(AllProvidersExhausted), reraise=True)
-def extract_financial_metrics(text: str, company_hint: str) -> FinancialMetrics:
+def extract_financial_metrics(text: str, company_hint: str, analyst_hint: str | None = None) -> FinancialMetrics:
     prompt = PromptTemplate(
         template=METRICS_EXTRACTION_PROMPT,
-        input_variables=["text"],
+        input_variables=["text", "analyst_hint"],
         partial_variables={"format_instructions": metrics_parser.get_format_instructions()},
     )
     chain = prompt | get_extraction_llm() | metrics_parser
     try:
-        result = chain.invoke({"text": text})
+        result = chain.invoke({"text": text, "analyst_hint": analyst_hint or "None provided."})
         if not result.company_name:
             result.company_name = company_hint
         return result
@@ -30,18 +30,15 @@ def extract_financial_metrics(text: str, company_hint: str) -> FinancialMetrics:
         return FinancialMetrics(company_name=company_hint)
 
 
-def compute_risk_score(company_id: str, metrics: FinancialMetrics) -> RiskScore:
-    """Pure arithmetic, rule-based thresholds — deliberately no ML/LLM here.
-    Easy to explain, easy to audit, easy to justify in an interview."""
+def score_from_ratios(company_id: str, debt_to_equity: float | None, current_ratio: float | None,
+                      net_margin: float | None) -> RiskScore:
+    """The rules, and only the rules: ratios in, risk level + human-readable notes out.
+    Used by the automatic score AND by the analyst override, so both always follow the same thresholds."""
     notes = []
-    debt_to_equity = None
-    current_ratio = None
-    net_margin = None
     risk_points = 0
     known_ratios = 0
 
-    if metrics.total_debt is not None and metrics.total_equity:
-        debt_to_equity = round(metrics.total_debt / metrics.total_equity, 2)
+    if debt_to_equity is not None:
         known_ratios += 1
         if debt_to_equity > 2.0:
             risk_points += 2
@@ -52,8 +49,7 @@ def compute_risk_score(company_id: str, metrics: FinancialMetrics) -> RiskScore:
         else:
             notes.append(f"Healthy debt-to-equity ratio ({debt_to_equity}).")
 
-    if metrics.current_assets is not None and metrics.current_liabilities:
-        current_ratio = round(metrics.current_assets / metrics.current_liabilities, 2)
+    if current_ratio is not None:
         known_ratios += 1
         if current_ratio < 1.0:
             risk_points += 2
@@ -64,8 +60,7 @@ def compute_risk_score(company_id: str, metrics: FinancialMetrics) -> RiskScore:
         else:
             notes.append(f"Adequate current ratio ({current_ratio}).")
 
-    if metrics.net_income is not None and metrics.revenue:
-        net_margin = round(metrics.net_income / metrics.revenue, 3)
+    if net_margin is not None:
         known_ratios += 1
         if net_margin < 0:
             risk_points += 2
@@ -94,3 +89,22 @@ def compute_risk_score(company_id: str, metrics: FinancialMetrics) -> RiskScore:
         risk_level=risk_level,
         notes=notes,
     )
+
+
+def compute_risk_score(company_id: str, metrics: FinancialMetrics) -> RiskScore:
+    """Pure arithmetic, rule-based thresholds — deliberately no ML/LLM here.
+    Easy to explain, easy to audit, easy to justify in an interview."""
+    debt_to_equity = None
+    current_ratio = None
+    net_margin = None
+
+    if metrics.total_debt is not None and metrics.total_equity:
+        debt_to_equity = round(metrics.total_debt / metrics.total_equity, 2)
+
+    if metrics.current_assets is not None and metrics.current_liabilities:
+        current_ratio = round(metrics.current_assets / metrics.current_liabilities, 2)
+
+    if metrics.net_income is not None and metrics.revenue:
+        net_margin = round(metrics.net_income / metrics.revenue, 3)
+
+    return score_from_ratios(company_id, debt_to_equity, current_ratio, net_margin)

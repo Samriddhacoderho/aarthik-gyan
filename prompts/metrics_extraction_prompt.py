@@ -12,6 +12,11 @@ Definitions:
 - current_assets / current_liabilities: the "Total current" lines on the balance sheet.
 - revenue / net_income: for the latest fiscal year.
 
+A human reviewer may have left guidance about where to look or what was wrong with an earlier result.
+Use it only to decide where in the text to look. Every number must still come from the text below;
+never take a number from the guidance itself.
+Reviewer guidance: {analyst_hint}
+
 {format_instructions}
 
 Financial statement text:

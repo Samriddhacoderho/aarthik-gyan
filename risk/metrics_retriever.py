@@ -9,15 +9,19 @@ METRIC_QUERIES = [
 ]
 
 
-def retrieve_metrics_context(document_hash: str, top_k_per_query: int = 3) -> str:
+def retrieve_metrics_context(document_hash: str, top_k_per_query: int = 3,
+                             extra_queries: list[str] | None = None) -> str:
     """Targeted retrieval instead of dumping the whole document — pulls only
     the chunks most likely to contain balance sheet / income statement figures,
     filtered to this specific document so multi-doc collections don't bleed
-    into each other."""
+    into each other.
+
+    extra_queries: optional extra search texts (for example an analyst's hint such as
+    "current assets are on the balance sheet") so a re-run can look in new places."""
     seen = set()
     collected = []
 
-    for query in METRIC_QUERIES:
+    for query in METRIC_QUERIES + [q for q in (extra_queries or []) if q and q.strip()]:
         hits = search_chunks(query, top_k=top_k_per_query, document_hash=document_hash)
         for hit in hits:
             if hit["text"] not in seen:

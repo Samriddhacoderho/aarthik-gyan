@@ -40,21 +40,31 @@ def write_risk_assessment(score: RiskScore, document_hash: str) -> str | None:
     return assessment_id
 
 
-def run_risk_agent(company_id: str, company_name: str, document_hash: str, force: bool = False):
+def run_risk_agent(company_id: str, company_name: str, document_hash: str, force: bool = False,
+                   analyst_hint: str | None = None, allow_overwrite_final: bool = False):
+    """Scores a company on one document and stores it as a DRAFT RiskAssessment.
+
+    force=True              re-score even if a DRAFT already exists.
+    analyst_hint            a human's guidance: used as an extra search query AND shown to the LLM.
+    allow_overwrite_final   only the analyst-requested re-run in the review loop passes True. It lets the
+                            SYSTEM's numbers on an already approved assessment be re-calculated. The approved
+                            values themselves (final_*) and the review history are never touched here; they
+                            are only replaced when the writer records a new approval.
+    """
     assessment_id = _assessment_id(company_id, document_hash)
     existing = neo4j_client.run_query(FIND_ASSESSMENT_QUERY, {"company_id": company_id, "assessment_id": assessment_id})
 
     if existing:
         status = existing[0]["status"]
-        if status != "DRAFT":
+        if status != "DRAFT" and not allow_overwrite_final:
             print(f"[risk_agent] {company_id} already has a {status} assessment for this document — leaving it untouched.")
             return assessment_id
         if not force:
-            print(f"[risk_agent] Reusing existing DRAFT assessment for {company_id} (no LLM call).")
+            print(f"[risk_agent] Reusing existing {status} assessment for {company_id} (no LLM call).")
             return assessment_id
 
     print(f"[risk_agent] Scoring '{company_name}' ({company_id})...")
-    context = retrieve_metrics_context(document_hash)
-    metrics = extract_financial_metrics(context, company_hint=company_name)
+    context = retrieve_metrics_context(document_hash, extra_queries=[analyst_hint] if analyst_hint else None)
+    metrics = extract_financial_metrics(context, company_hint=company_name, analyst_hint=analyst_hint)
     score = compute_risk_score(company_id, metrics)
     return write_risk_assessment(score, document_hash)

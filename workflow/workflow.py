@@ -26,7 +26,7 @@ def build_workflow():
     graph.set_entry_point("auditor")
     graph.add_edge("auditor", "quant")
     graph.add_edge("quant", "hitl")
-    graph.add_conditional_edges("hitl", route_after_hitl, {"writer": "writer", "quant": "quant"})
+    graph.add_conditional_edges("hitl", route_after_hitl, {"writer": "writer", "quant": "quant", "hitl": "hitl"})
     graph.add_edge("writer", END)
 
     _compiled_graph = graph.compile(checkpointer=_checkpointer)
