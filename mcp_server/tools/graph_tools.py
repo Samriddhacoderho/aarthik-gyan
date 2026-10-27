@@ -6,13 +6,11 @@ from schemas.mcp_outputs import CompanyProfile, ConnectedEntity, CentralityResul
 def register_graph_tools(mcp):
     @mcp.tool()
     def get_company_profile(company_id: str) -> Union[CompanyProfile, ToolError]:
-        """Returns a company's basic profile plus its latest risk assessment
-        (risk_level, debt_to_equity, current_ratio, net_margin), if one exists."""
+        """Returns a company's basic structural profile: id, name, description and how many direct
+        relationships it has in the graph. It deliberately contains NO risk scores or ratios."""
         profile = fetch_company_profile(company_id)
         if profile is None:
             return ToolError(error=f"No company found with id '{company_id}'.")
-        if profile.get("assessment_date") is not None:
-            profile["assessment_date"] = str(profile["assessment_date"])
         return CompanyProfile(**profile)
 
     @mcp.tool()

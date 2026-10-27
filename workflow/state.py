@@ -11,6 +11,8 @@ class GraphState(TypedDict):
     auditor_findings: Optional[list[str]]
     risk_score: Optional[dict]           # the latest score the SYSTEM calculated
     final_score: Optional[dict]          # the analyst's override (None = use risk_score as is)
+    quant_context: Optional[dict]        # extra info the quant step gathered through MCP (shown to the analyst,
+                                         # NOT used in the score): earlier assessments + graph centrality
 
     human_action: Optional[str]          # last review action: "approve" | "override" | "rerun"
     rerun_hint: Optional[str]            # the analyst's guidance for the next re-score

@@ -151,12 +151,15 @@ the risk-analysis workflow.
 │   └── qdrant_client.py        # Qdrant connection and collection setup
 ├── workflow/
 │   ├── nodes/                   # Auditor, quant, HITL, and writer nodes
-│   ├── mcp_client.py            # MCP tool integration
+│   ├── mcp_client.py            # Per-node MCP allow-lists and toolbox
+│   ├── scoped_tools.py          # The one document-locked tool the auditor LLM sees
 │   ├── state.py                 # Workflow state schema
 │   └── workflow.py              # LangGraph workflow definition
 ├── mcp_server/
 │   ├── server.py                # FastMCP HTTP server
 │   └── tools/                   # Graph, retrieval, and risk tools
+├── tests/
+│   └── test_mcp_scoping.py      # Offline test of the MCP wiring
 ├── analyze.py                   # Interactive risk-analysis workflow
 ├── config.py                   # Environment-backed configuration
 ├── main.py                     # Ingestion and question-answering entry point
@@ -220,10 +223,32 @@ python analyze.py
 To start the MCP server:
 
 ```bash
-python mcp_server/server.py
+python -m mcp_server.server
 ```
 
-It listens on `http://127.0.0.1:8000` using FastMCP HTTP transport.
+It listens on `http://127.0.0.1:8000` using FastMCP HTTP transport. Restart it after
+any change to the files in `mcp_server/` (the workflow checks that the tools it needs exist).
+
+### Which node may use which MCP tool
+
+Each workflow node has its own allow-list in `workflow/mcp_client.py`
+(`NODE_TOOL_ALLOWLIST`); a call to any other tool raises `PermissionError`.
+
+| Node | Allowed tools | Notes |
+| --- | --- | --- |
+| auditor | `get_company_profile`, `get_connected_entities`, `retrieve_footnote_context` | The first two are called by code. The LLM gets only one wrapper tool, `search_this_document(query)`, locked to the current document. No risk scores are visible. |
+| quant | `get_debt_ratios`, `calculate_graph_centrality`, `retrieve_footnote_context`, `save_risk_assessment` | All called by code, none by the LLM. |
+
+`retrieve_footnote_context` requires a `document_hash` (it can no longer search all documents).
+
+### Offline test for the MCP wiring
+
+```bash
+python tests/test_mcp_scoping.py
+```
+
+Needs no API keys, Neo4j or Qdrant: it starts the real MCP server with fake databases and
+checks the allow-lists, the document lock and the quant flow.
 
 ## Configuration
 

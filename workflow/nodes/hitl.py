@@ -22,6 +22,7 @@ def hitl_node(state: GraphState) -> dict:
         "auditor_findings": state.get("auditor_findings", []),
         "risk_score": state["risk_score"],
         "final_score": state.get("final_score"),
+        "quant_context": state.get("quant_context"),
         "iteration": iteration,
         "reruns_left": max(0, max_iterations - iteration),
         "review_history": state.get("review_history", []),

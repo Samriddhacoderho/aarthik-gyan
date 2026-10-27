@@ -1,0 +1,479 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="main-py-architecture">
+    <mxGraphModel dx="2270" dy="844" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="fr_ask" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;dashed=1;strokeColor=#888888;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=16;spacingTop=8;fontSize=20;fontStyle=1;fontColor=#555555;" value="ask(question)" vertex="1">
+          <mxGeometry x="250" y="5040" width="2100" height="1330" as="geometry" />
+        </mxCell>
+        <mxCell id="fr_try" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;dashed=1;strokeColor=#888888;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=16;spacingTop=8;fontSize=20;fontStyle=1;fontColor=#555555;" value="try:" vertex="1">
+          <mxGeometry x="280" y="1110" width="2040" height="3730" as="geometry" />
+        </mxCell>
+        <mxCell id="fr_ing" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;dashed=1;strokeColor=#888888;strokeWidth=2;verticalAlign=top;align=left;spacingLeft=16;spacingTop=8;fontSize=20;fontStyle=1;fontColor=#555555;" value="ingest(file_path)" vertex="1">
+          <mxGeometry x="250" y="310" width="2100" height="4650" as="geometry" />
+        </mxCell>
+        <mxCell id="title" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=25;fontStyle=1;" value="main.py architecture" vertex="1">
+          <mxGeometry x="150" y="10" width="700" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_t" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;fontSize=16;fontStyle=1;" value="Legend" vertex="1">
+          <mxGeometry x="1700" y="20" width="300" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_e" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="code step" vertex="1">
+          <mxGeometry x="1700" y="60" width="120" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_d" parent="1" style="rhombus;whiteSpace=wrap;html=1;shapeInside=1;" value="decision" vertex="1">
+          <mxGeometry x="1840" y="50" width="130" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_r" parent="1" style="whiteSpace=wrap;html=1;rounded=1;arcSize=8;" value="note / detail" vertex="1">
+          <mxGeometry x="1990" y="60" width="110" height="50" as="geometry" />
+        </mxCell>
+        <mxCell id="lg_c" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="database" vertex="1">
+          <mxGeometry x="2120" y="50" width="70" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="M0" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="python main.py&lt;br&gt;(if __name__ == '__main__')" vertex="1">
+          <mxGeometry x="300" y="60" width="420" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="M1" parent="1" style="whiteSpace=wrap;html=1;rounded=1;arcSize=8;" value="Already at IMPORT time (before main runs):&lt;br&gt;vectorstore.qdrant_client creates the Qdrant collection (cosine, 384 dims) + a 'document_hash' payload index if missing;&lt;br&gt;graph.neo4j_client builds the Neo4j driver." vertex="1">
+          <mxGeometry x="860" y="40" width="640" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="M2" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="neo4j_client.verify_connection()&lt;br&gt;vector_store_client.verify_connection()&lt;br&gt;fail fast if a database is unreachable" vertex="1">
+          <mxGeometry x="300" y="180" width="420" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="NEO" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Neo4j Aura" vertex="1">
+          <mxGeometry x="1700" y="190" width="90" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="QDR" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Qdrant" vertex="1">
+          <mxGeometry x="1850" y="190" width="90" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="m12" parent="1" source="M0" target="M2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m13" parent="1" source="M2" target="NEO" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="connect" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m14" parent="1" source="M2" target="QDR" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="connect" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1000" y="225" />
+              <mxPoint x="1000" y="160" />
+              <mxPoint x="1895" y="160" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I0" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="ingest(&quot;documents/Brightwater_..._Annual_Report.pdf&quot;)" vertex="1">
+          <mxGeometry x="300" y="370" width="420" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="I1" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="file_hash = compute_file_hash(file_path)&lt;br&gt;SHA-256 of the file bytes" vertex="1">
+          <mxGeometry x="300" y="480" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="I1n" parent="1" style="whiteSpace=wrap;html=1;rounded=1;arcSize=8;" value="Content-based: renaming a file keeps the same hash (no re-ingest), editing it makes a new one." vertex="1">
+          <mxGeometry x="860" y="485" width="560" height="70" as="geometry" />
+        </mxCell>
+        <mxCell id="I2" parent="1" style="rhombus;whiteSpace=wrap;html=1;shapeInside=1;" value="is_already_ingested(file_hash)?&lt;br&gt;Document.status == 'completed'" vertex="1">
+          <mxGeometry x="300" y="600" width="420" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="I2n" parent="1" style="whiteSpace=wrap;html=1;rounded=1;arcSize=8;" value="CHECK_DOCUMENT_QUERY on Neo4j.&lt;br&gt;Only 'completed' counts as done.&lt;br&gt;missing / 'processing' / 'partial' / 'failed' -&gt; process again" vertex="1">
+          <mxGeometry x="860" y="610" width="560" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="SKIP" parent="1" style="whiteSpace=wrap;html=1;" value="yes: print &quot;already ingested - skipping&quot;&lt;br&gt;return (go straight to ask())" vertex="1">
+          <mxGeometry x="1500" y="625" width="330" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="I3" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="CREATE_DOCUMENT_NODE_QUERY&lt;br&gt;MERGE (d:Document {hash})&lt;br&gt;SET filename, status='processing'" vertex="1">
+          <mxGeometry x="300" y="800" width="420" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="I4" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="docs = extract_text_from_pdf(path)   (PyPDFLoader: 1 Document per page)&lt;br&gt;chunks = chunk_text(docs)&lt;br&gt;RecursiveCharacterTextSplitter size=1000, overlap=200" vertex="1">
+          <mxGeometry x="300" y="940" width="420" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="m24" parent="1" source="I0" target="I1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m25" parent="1" source="I1" target="I2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m26" parent="1" source="I2" target="I3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;fontStyle=1;" value="no" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m27" parent="1" source="I3" target="I4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m28" parent="1" source="I1" target="I1n" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m29" parent="1" source="I2" target="I2n" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m30" parent="1" source="I2" target="SKIP" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;fontStyle=1;" value="yes" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="I5" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="result, failed_batches =&lt;br&gt;extract_entities_from_document(chunks)&lt;br&gt;(entities + relationships from the LLM)" vertex="1">
+          <mxGeometry x="300" y="1170" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="b1" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="batches = batch_chunks(chunks)&lt;br&gt;max 10 chunks AND ~15,000 est. tokens per batch" vertex="1">
+          <mxGeometry x="860" y="1150" width="420" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="b2" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="run_batches_parallel(batches)&lt;br&gt;ThreadPoolExecutor, 3 workers (MAX_EXTRACTION_WORKERS)" vertex="1">
+          <mxGeometry x="860" y="1280" width="420" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="b3" parent="1" style="rhombus;whiteSpace=wrap;html=1;shapeInside=1;" value="for each batch:&lt;br&gt;saved in .extraction_cache?" vertex="1">
+          <mxGeometry x="860" y="1410" width="420" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="b3y" parent="1" style="whiteSpace=wrap;html=1;rounded=1;arcSize=8;" value="yes: load cached ExtractionResult&lt;br&gt;(no LLM call, saves tokens)" vertex="1">
+          <mxGeometry x="1380" y="1440" width="300" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="b4" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="with extraction_semaphore:&lt;br&gt;extract_entities_from_batch(batch)&lt;br&gt;EXTRACTION_PROMPT | get_extraction_llm() | parser&lt;br&gt;(tenacity: 2 tries)" vertex="1">
+          <mxGeometry x="860" y="1610" width="420" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="b4n" parent="1" style="whiteSpace=wrap;html=1;rounded=1;arcSize=8;" value="get_extraction_llm() = failover router:&lt;br&gt;Groq gpt-oss-20b first, Gemini flash second;&lt;br&gt;shared cool-downs after 429s; up to 3 rounds,&lt;br&gt;180 s total budget; else AllProvidersExhausted&lt;br&gt;Output parsed into ExtractionResult&lt;br&gt;{entities[], relationships[]} (Pydantic)" vertex="1">
+          <mxGeometry x="1380" y="1590" width="520" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="b5" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="success: save to cache&lt;br&gt;failure: recorded in failures list (not fatal yet)" vertex="1">
+          <mxGeometry x="860" y="1780" width="420" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="b6" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="retry_failed_batches(failures, max_retries=1)&lt;br&gt;run the failed batches once more" vertex="1">
+          <mxGeometry x="860" y="1910" width="420" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="b7" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="merge all results:&lt;br&gt;entities -&gt; dict keyed by id (last one wins)&lt;br&gt;relationships -&gt; appended&lt;br&gt;returns (ExtractionResult, still_failing)" vertex="1">
+          <mxGeometry x="860" y="2040" width="420" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="m42" parent="1" source="I4" target="I5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m43" parent="1" source="I5" target="b1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m44" parent="1" source="b1" target="b2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m45" parent="1" source="b2" target="b3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m46" parent="1" source="b3" target="b3y" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;fontStyle=1;" value="yes" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m47" parent="1" source="b3" target="b4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;fontStyle=1;" value="no" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m48" parent="1" source="b4" target="b4n" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m49" parent="1" source="b4" target="b5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m50" parent="1" source="b5" target="b6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m51" parent="1" source="b6" target="b7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m52" parent="1" source="b3y" target="b5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1530" y="1825" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="I6" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="result = resolve_entities(result)&lt;br&gt;merge duplicate entities&lt;br&gt;(tesla / tesla_inc / company_main -&gt; one id)" vertex="1">
+          <mxGeometry x="300" y="2230" width="420" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="r1" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="fewer than 2 entities? -&gt; return unchanged" vertex="1">
+          <mxGeometry x="860" y="2210" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="r2" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="_classify_duplicates(entity list)&lt;br&gt;ENTITY_RESOLUTION_PROMPT | get_extraction_llm() | parser&lt;br&gt;(tenacity: 2 tries)" vertex="1">
+          <mxGeometry x="860" y="2330" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="r3" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="alias -&gt; canonical id map&lt;br&gt;rewrite entity ids and relationship&lt;br&gt;source_id / target_id; drop duplicate entities" vertex="1">
+          <mxGeometry x="860" y="2470" width="420" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="r4" parent="1" style="whiteSpace=wrap;html=1;rounded=1;arcSize=8;" value="if this LLM pass fails: print and skip dedup,&lt;br&gt;ingestion continues with the un-merged result" vertex="1">
+          <mxGeometry x="1380" y="2340" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="m58" parent="1" source="b7" target="I6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m59" parent="1" source="I6" target="r1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m60" parent="1" source="r1" target="r2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m61" parent="1" source="r2" target="r3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m62" parent="1" source="r2" target="r4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="I7" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="write_extraction_to_graph(result, file_hash)&lt;br&gt;entities, then relationships -&gt; Neo4j" vertex="1">
+          <mxGeometry x="300" y="2660" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="w1" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="WRITE_ENTITIES_QUERY&lt;br&gt;MERGE (e:Entity {id}); SET name, type, description&lt;br&gt;MERGE (Document)-[:MENTIONS]-&gt;(e)" vertex="1">
+          <mxGeometry x="860" y="2640" width="420" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="w2" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="WRITE_RELATIONSHIPS_QUERY&lt;br&gt;MATCH both ends; MERGE (a)-[:RELATION {type}]-&gt;(b)&lt;br&gt;SET detail, source_document = file_hash&lt;br&gt;(a missing end entity is skipped)" vertex="1">
+          <mxGeometry x="860" y="2800" width="420" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="m66" parent="1" source="r3" target="I7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m67" parent="1" source="I7" target="w1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m68" parent="1" source="w1" target="w2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="I8" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="index_chunks(chunks, filename, file_hash)&lt;br&gt;make the document searchable by meaning" vertex="1">
+          <mxGeometry x="300" y="3000" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="q1" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="delete old Qdrant points of this document_hash&lt;br&gt;(re-running never creates duplicates)" vertex="1">
+          <mxGeometry x="860" y="2990" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="q2" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="embed_texts(chunks)&lt;br&gt;local sentence-transformers all-MiniLM-L6-v2, normalized" vertex="1">
+          <mxGeometry x="860" y="3100" width="420" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="q3" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="points: id = uuid5(file_hash:i)&lt;br&gt;payload {text, filename, document_hash, chunk_index}" vertex="1">
+          <mxGeometry x="860" y="3220" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="q4" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="upsert in batches of 64 -&gt; Qdrant" vertex="1">
+          <mxGeometry x="860" y="3350" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="I9" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="primary = pick_primary_company(result)&lt;br&gt;the Company entity with the MOST relationships" vertex="1">
+          <mxGeometry x="300" y="3560" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="I9d" parent="1" style="rhombus;whiteSpace=wrap;html=1;shapeInside=1;" value="primary found?" vertex="1">
+          <mxGeometry x="300" y="3700" width="420" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="I9n" parent="1" style="whiteSpace=wrap;html=1;rounded=1;arcSize=8;" value="no Company in the result: risk scoring is skipped&lt;br&gt;(ingestion still completes)" vertex="1">
+          <mxGeometry x="860" y="3715" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="m77" parent="1" source="I8" target="I9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m78" parent="1" source="I9" target="I9d" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m79" parent="1" source="I9d" target="I9n" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;fontStyle=1;" value="no" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="I10" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="run_risk_agent(primary.id, primary.name, file_hash)&lt;br&gt;INGESTION path: talks to Neo4j / Qdrant directly&lt;br&gt;(analyze.py's quant node does the same job via MCP)" vertex="1">
+          <mxGeometry x="300" y="3900" width="420" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="m81" parent="1" source="I9d" target="I10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;fontStyle=1;" value="yes" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="k1" parent="1" style="rhombus;whiteSpace=wrap;html=1;shapeInside=1;" value="assessment for (company, document)&lt;br&gt;already exists?" vertex="1">
+          <mxGeometry x="860" y="3880" width="420" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="k1y" parent="1" style="whiteSpace=wrap;html=1;rounded=1;arcSize=8;" value="yes: reuse it (no LLM call)&lt;br&gt;return assessment_id" vertex="1">
+          <mxGeometry x="1380" y="3910" width="360" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="k2" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="retrieve_metrics_context(file_hash)&lt;br&gt;5 fixed queries, top 3 each, filtered to this document&lt;br&gt;-&gt; deduplicated context" vertex="1">
+          <mxGeometry x="860" y="4070" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="k3" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="extract_financial_metrics(context, company_hint)&lt;br&gt;METRICS_EXTRACTION_PROMPT | get_extraction_llm() | metrics_parser&lt;br&gt;-&gt; FinancialMetrics (debt, equity, assets, ...)" vertex="1">
+          <mxGeometry x="860" y="4210" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="k4" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="compute_risk_score(company_id, metrics)&lt;br&gt;pure arithmetic: D/E, current ratio, net margin -&gt; LOW / MEDIUM / HIGH / UNKNOWN" vertex="1">
+          <mxGeometry x="860" y="4350" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="k5" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="write_risk_assessment(score, file_hash)&lt;br&gt;MERGE RiskAssessment (status DRAFT) linked to Company and Document" vertex="1">
+          <mxGeometry x="860" y="4470" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="m88" parent="1" source="I10" target="k1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m89" parent="1" source="k1" target="k1y" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;fontStyle=1;" value="yes" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m90" parent="1" source="k1" target="k2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;fontStyle=1;" value="no" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m91" parent="1" source="k2" target="k3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m92" parent="1" source="k3" target="k4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m93" parent="1" source="k4" target="k5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="I11" parent="1" style="rhombus;whiteSpace=wrap;html=1;shapeInside=1;" value="failed_batches&lt;br&gt;is not empty?" vertex="1">
+          <mxGeometry x="300" y="4640" width="420" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="I11a" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="yes: register_partial_document(...)&lt;br&gt;Document.status = 'partial' (+ failed_batch_count)" vertex="1">
+          <mxGeometry x="860" y="4610" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="I11b" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="no: register_document(...)&lt;br&gt;Document.status = 'completed' (+ entity / relationship counts)" vertex="1">
+          <mxGeometry x="860" y="4730" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="m97" parent="1" source="I11" target="I11a" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;fontStyle=1;" value="yes" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m98" parent="1" source="I11" target="I11b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;fontStyle=1;" value="no" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="EXC" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="except Exception as e (anything above fails):&lt;br&gt;print 'Ingestion failed'&lt;br&gt;mark_document_failed(): Document.status = 'failed' (retried next run;&lt;br&gt;the batch cache makes the retry cheap)&lt;br&gt;then raise: main.py stops with the error" vertex="1">
+          <mxGeometry x="1500" y="1170" width="700" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="A0" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="ask(&quot;Summary of the document&quot;)&lt;br&gt;prints &quot;[main] Q: ...&quot;" vertex="1">
+          <mxGeometry x="300" y="5100" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="A1" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="answer_question(question)&lt;br&gt;(agent/qa_agent.py)" vertex="1">
+          <mxGeometry x="300" y="5220" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="A2" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="route_question(question)&lt;br&gt;step 1: classify_question(question)" vertex="1">
+          <mxGeometry x="300" y="5340" width="420" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="A2n" parent="1" style="whiteSpace=wrap;html=1;rounded=1;arcSize=8;" value="ROUTING_PROMPT | get_extraction_llm(max_rounds=1) | StrOutputParser&lt;br&gt;answer must be exactly GRAPH, VECTOR or BOTH&lt;br&gt;anything else -&gt; print a warning and use BOTH" vertex="1">
+          <mxGeometry x="860" y="5330" width="560" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="A3" parent="1" style="rhombus;whiteSpace=wrap;html=1;shapeInside=1;" value="route = ?" vertex="1">
+          <mxGeometry x="300" y="5490" width="420" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="g1" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="retrieve_from_graph(question)&lt;br&gt;generate_cypher: CYPHER_GEN_PROMPT | LLM (strips ```cypher fences)" vertex="1">
+          <mxGeometry x="860" y="5470" width="420" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="g2" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="neo4j_client.run_query(cypher)&lt;br&gt;ok -&gt; {source:'graph', cypher, results}&lt;br&gt;error -&gt; {..., results: [], error}" vertex="1">
+          <mxGeometry x="860" y="5600" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="v1" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="retrieve_from_vector(question, top_k=5)&lt;br&gt;search_chunks(question): embed -&gt; cosine search&lt;br&gt;in ALL documents (no document_hash filter)" vertex="1">
+          <mxGeometry x="860" y="5760" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="A3n" parent="1" style="whiteSpace=wrap;html=1;rounded=1;arcSize=8;" value="GRAPH -&gt; graph only;  VECTOR -&gt; vector only;&lt;br&gt;BOTH -&gt; both, in that order" vertex="1">
+          <mxGeometry x="1380" y="5480" width="420" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="A4" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="ANSWER_PROMPT with the retrieval results&lt;br&gt;(json.dumps(results))&lt;br&gt;| get_extraction_llm(max_rounds=1) | StrOutputParser" vertex="1">
+          <mxGeometry x="300" y="5940" width="420" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="A5" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="answer.strip()&lt;br&gt;prints &quot;[main] A: ...&quot;" vertex="1">
+          <mxGeometry x="300" y="6090" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="END" parent="1" style="ellipse;whiteSpace=wrap;html=1;shapeInside=1;" value="neo4j_client.close()&lt;br&gt;END" vertex="1">
+          <mxGeometry x="300" y="6220" width="420" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="m113" parent="1" source="A0" target="A1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m114" parent="1" source="A1" target="A2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m115" parent="1" source="A2" target="A3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m116" parent="1" source="A2" target="A2n" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m117" parent="1" source="A3" target="g1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;fontStyle=1;" value="GRAPH / BOTH" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m118" parent="1" source="g1" target="g2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m119" parent="1" source="A3" target="v1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;fontStyle=1;" value="VECTOR / BOTH" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="510.0" y="5810" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m120" parent="1" source="A3" target="A4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" value="results of the chosen source(s)" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m121" parent="1" source="A4" target="A5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m122" parent="1" source="A5" target="END" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="N_i3" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Neo4j" vertex="1">
+          <mxGeometry x="880" y="790" width="80" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="m124" parent="1" source="I3" target="N_i3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="N_w" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Neo4j" vertex="1">
+          <mxGeometry x="1400" y="2690" width="80" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="m126" parent="1" source="w1" target="N_w" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m127" parent="1" source="w2" target="N_w" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Q_q" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Qdrant" vertex="1">
+          <mxGeometry x="1400" y="3150" width="80" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="m129" parent="1" source="q1" target="Q_q" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m130" parent="1" source="q4" target="Q_q" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Q_k" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Qdrant" vertex="1">
+          <mxGeometry x="1450" y="4060" width="80" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="m132" parent="1" source="k2" target="Q_k" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="N_k" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Neo4j" vertex="1">
+          <mxGeometry x="1450" y="4460" width="80" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="m134" parent="1" source="k5" target="N_k" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="N_r" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Neo4j" vertex="1">
+          <mxGeometry x="1400" y="4700" width="80" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="m136" parent="1" source="I11a" target="N_r" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m137" parent="1" source="I11b" target="N_r" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="N_g" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Neo4j" vertex="1">
+          <mxGeometry x="1380" y="5610" width="80" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="m139" parent="1" source="g2" target="N_g" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Q_v" parent="1" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;" value="Qdrant" vertex="1">
+          <mxGeometry x="1380" y="5770" width="80" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="m141" parent="1" source="v1" target="Q_v" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="m142" parent="1" source="k5" target="I11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="780" y="4520" />
+              <mxPoint x="780" y="4715" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m143" parent="1" source="SKIP" target="A0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2420" y="675" />
+              <mxPoint x="2420" y="5140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m144" parent="1" source="I11a" target="A0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2380" y="4660" />
+              <mxPoint x="2380" y="5140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="m145" parent="1" source="I11b" target="A0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;defaultLabelBackgroundColor=page;dashed=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" value="" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="2380" y="4780" />
+              <mxPoint x="2380" y="5140" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

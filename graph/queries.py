@@ -1,17 +1,13 @@
 from graph.neo4j_client import neo4j_client
 
+# STRUCTURE ONLY. This query must never return anything from a RiskAssessment node: the auditor
+# reads it BEFORE the quant step runs, and must not be steered by an earlier risk score.
 COMPANY_PROFILE_QUERY = """
 MATCH (c:Entity {id: $company_id, type: 'Company'})
-OPTIONAL MATCH (c)-[:HAS_ASSESSMENT]->(r:RiskAssessment)
-WITH c, r ORDER BY r.created_at DESC
-WITH c, collect(r)[0] AS latest_assessment
+OPTIONAL MATCH (c)-[rel:RELATION]-()
+WITH c, count(rel) AS relationship_count
 RETURN c.id AS id, c.name AS name, c.description AS description,
-       latest_assessment.risk_level AS risk_level,
-       latest_assessment.debt_to_equity AS debt_to_equity,
-       latest_assessment.current_ratio AS current_ratio,
-       latest_assessment.net_margin AS net_margin,
-       latest_assessment.status AS assessment_status,
-       latest_assessment.created_at AS assessment_date
+       relationship_count
 """
 
 CONNECTED_ENTITIES_QUERY = """
@@ -33,21 +29,17 @@ ORDER BY degree DESC
 LIMIT $limit
 """
 
+# Used by the QUANT node only. document_hash lets it tell "the assessment for this report" (reuse /
+# re-score) apart from "earlier years' assessments" (context). final_* are the analyst-approved values.
 DEBT_RATIOS_QUERY = """
 MATCH (c:Entity {id: $company_id, type: 'Company'})-[:HAS_ASSESSMENT]->(r:RiskAssessment)
+OPTIONAL MATCH (r)-[:BASED_ON]->(d:Document)
 RETURN r.debt_to_equity AS debt_to_equity, r.current_ratio AS current_ratio,
        r.net_margin AS net_margin, r.risk_level AS risk_level,
-       r.notes AS notes, r.status AS status, r.created_at AS created_at
+       r.notes AS notes, r.status AS status, r.created_at AS created_at,
+       r.final_risk_level AS final_risk_level, r.overridden AS overridden,
+       d.hash AS document_hash, d.filename AS document_filename
 ORDER BY r.created_at DESC
-"""
-
-# The assessment for ONE company on ONE document. Used by the workflow so it never
-# picks up (or approves) an assessment that belongs to a different year's report.
-ASSESSMENT_FOR_DOCUMENT_QUERY = """
-MATCH (:Entity {id: $company_id, type: 'Company'})-[:HAS_ASSESSMENT]->(r:RiskAssessment)
-      -[:BASED_ON]->(:Document {hash: $document_hash})
-RETURN r.id AS assessment_id, r.debt_to_equity AS debt_to_equity, r.current_ratio AS current_ratio,
-       r.net_margin AS net_margin, r.risk_level AS risk_level, r.notes AS notes, r.status AS status
 """
 
 
@@ -69,7 +61,3 @@ def fetch_degree_centrality(limit: int = 15) -> list[dict]:
 def fetch_debt_ratio_history(company_id: str) -> list[dict]:
     return neo4j_client.run_query(DEBT_RATIOS_QUERY, {"company_id": company_id})
 
-
-def fetch_assessment_for_document(company_id: str, document_hash: str) -> dict | None:
-    rows = neo4j_client.run_query(ASSESSMENT_FOR_DOCUMENT_QUERY,{"company_id": company_id, "document_hash": document_hash})
-    return rows[0] if rows else None

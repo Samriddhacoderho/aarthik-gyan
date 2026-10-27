@@ -9,6 +9,24 @@ METRIC_QUERIES = [
 ]
 
 
+def metric_queries(extra_queries: list[str] | None = None) -> list[str]:
+    """The search texts used to find balance-sheet / income-statement chunks (+ optional analyst hint).
+    Shared by the ingestion path (direct search) and the review workflow (MCP search)."""
+    return METRIC_QUERIES + [q for q in (extra_queries or []) if q and q.strip()]
+
+
+def merge_unique(chunk_texts: list[str]) -> str:
+    """Joins retrieved chunk texts into one context string, dropping exact duplicates."""
+    seen = set()
+    collected = []
+    for text in chunk_texts:
+        if text not in seen:
+            seen.add(text)
+            collected.append(text)
+    print(f"[metrics_retriever] Retrieved {len(collected)} unique chunks for metrics extraction.")
+    return "\n\n---\n\n".join(collected)
+
+
 def retrieve_metrics_context(document_hash: str, top_k_per_query: int = 3,
                              extra_queries: list[str] | None = None) -> str:
     """Targeted retrieval instead of dumping the whole document — pulls only
@@ -18,16 +36,7 @@ def retrieve_metrics_context(document_hash: str, top_k_per_query: int = 3,
 
     extra_queries: optional extra search texts (for example an analyst's hint such as
     "current assets are on the balance sheet") so a re-run can look in new places."""
-    seen = set()
-    collected = []
-
-    for query in METRIC_QUERIES + [q for q in (extra_queries or []) if q and q.strip()]:
-        hits = search_chunks(query, top_k=top_k_per_query, document_hash=document_hash)
-        for hit in hits:
-            if hit["text"] not in seen:
-                seen.add(hit["text"])
-                collected.append(hit["text"])
-
-    context = "\n\n---\n\n".join(collected)
-    print(f"[metrics_retriever] Retrieved {len(collected)} unique chunks for metrics extraction.")
-    return context
+    texts = []
+    for query in metric_queries(extra_queries):
+        texts.extend(hit["text"] for hit in search_chunks(query, top_k=top_k_per_query, document_hash=document_hash))
+    return merge_unique(texts)

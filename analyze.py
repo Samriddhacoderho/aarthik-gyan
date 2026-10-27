@@ -65,6 +65,26 @@ def _show_score(label: str, score: dict) -> None:
         print(f"      - {note}")
 
 
+def _show_quant_context(context: dict | None) -> None:
+    """Extra facts the quant step gathered through MCP. They are context for the analyst; they are NOT in the score."""
+    if not context:
+        return
+    print("\nContext (not part of the score):")
+    prior = context.get("prior_assessments") or []
+    if prior:
+        print("  Earlier assessments of this company:")
+        for p in prior:
+            tag = " (analyst-set)" if p.get("overridden") else ""
+            print(f"    - {p.get('document')}: {p.get('risk_level')}{tag}, {p.get('status')}, {p.get('created_at')}")
+    else:
+        print("  No earlier assessments of this company on other documents.")
+    c = context.get("centrality") or {}
+    if c.get("rank") is not None:
+        print(f"  Graph position: #{c['rank']} by number of direct relationships ({c['degree']} relationships).")
+    else:
+        print(f"  Graph position: not among the top {c.get('top_n')} most-connected entities.")
+
+
 def _ask_required(prompt: str) -> str:
     while True:
         text = input(prompt).strip()
@@ -123,6 +143,8 @@ def prompt_human(payload: dict) -> dict:
     if payload.get("final_score"):
         print()
         _show_score(">>> YOUR OVERRIDE, waiting for your confirmation:", payload["final_score"])
+
+    _show_quant_context(payload.get("quant_context"))
 
     if payload.get("review_history"):
         print("\nReview so far:")

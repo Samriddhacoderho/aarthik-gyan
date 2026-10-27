@@ -24,8 +24,8 @@ def extract_financial_metrics(text: str, company_hint: str, analyst_hint: str | 
             result.company_name = company_hint
         return result
     except AllProvidersExhausted:
-        raise   # both LLMs failed: a failed call must fail loudly, not become an empty score
-    except Exception as e:  # e.g. unparseable output
+        raise AllProvidersExhausted("All LLM providers failed to extract financial metrics.")
+    except Exception as e:  
         print(f"[ratios] Metrics extraction failed: {e}")
         return FinancialMetrics(company_name=company_hint)
 
