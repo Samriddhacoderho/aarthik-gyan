@@ -23,6 +23,7 @@ EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_DIM = 384  
 GROQ_MODEL="openai/gpt-oss-20b"
 GEMINI_MODEL="gemini-flash-latest"
+GROQ_BACKUP_MODEL = "llama-3.3-70b-versatile"   
 
 # Other Configuration
 MAX_EXTRACTION_WORKERS = 3

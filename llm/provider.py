@@ -11,12 +11,19 @@ from langchain_groq import ChatGroq
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.runnables import RunnableLambda
 
-from config import GROQ_MODEL, GEMINI_MODEL, LLM_TIMEOUT_SECONDS
+from config import GROQ_MODEL, GEMINI_MODEL, LLM_TIMEOUT_SECONDS, GROQ_BACKUP_MODEL
 
 
 _chain = None
 _lock = threading.Lock()
 
+
+def _groq(model):
+    kwargs = {}
+    if "gpt-oss" in model:
+        kwargs["reasoning_effort"] = "low"     # fewer hidden reasoning tokens per call
+    return ChatGroq(model=model, temperature=0, timeout=LLM_TIMEOUT_SECONDS,
+                    max_retries=3, **kwargs)   # SDK now waits out a 429 using Retry-After
 
 def get_llm():
     """Groq first, Gemini fallback using LangChain's built-in fallback."""
@@ -25,13 +32,8 @@ def get_llm():
     if _chain is None:
         with _lock:
             if _chain is None:
-                primary = ChatGroq(
-                    model=GROQ_MODEL,
-                    temperature=0,
-                    timeout=LLM_TIMEOUT_SECONDS,
-                    max_retries=0,
-                )
-
+                primary = _groq(GROQ_MODEL)
+                groq_backup = _groq(GROQ_BACKUP_MODEL) 
                 fallback = ChatGoogleGenerativeAI(
                     model=GEMINI_MODEL,
                     temperature=0,
@@ -39,10 +41,10 @@ def get_llm():
                     max_retries=1,
                 )
 
-                _chain = primary.with_fallbacks([fallback])
+                _chain = primary.with_fallbacks([groq_backup, fallback])
                 print(
                     f"[llm] Provider chain ready: "
-                    f"{GROQ_MODEL} -> {GEMINI_MODEL}"
+                    f"{GROQ_MODEL} -> {GROQ_BACKUP_MODEL} -> {GEMINI_MODEL}"
                 )
 
     return _chain

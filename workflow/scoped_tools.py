@@ -9,7 +9,7 @@ from langchain_core.tools import StructuredTool
 from workflow.mcp_client import NodeToolbox
 
 HITS_PER_SEARCH = 3
-MAX_CHARS_PER_HIT = 700     
+MAX_CHARS_PER_HIT = 400     
 
 
 def make_document_search_tool(toolbox: NodeToolbox, document_hash: str) -> StructuredTool:

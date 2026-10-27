@@ -8,7 +8,7 @@ from workflow.scoped_tools import make_document_search_tool
 from workflow.state import GraphState
 from prompts.auditor_prompt import AUDITOR_SYSTEM_PROMPT
 
-MAX_CONNECTIONS_IN_PROMPT = 40    # keeps the prompt small (free-tier token limits)
+MAX_CONNECTIONS_IN_PROMPT = 20    # keeps the prompt small (free-tier token limits)
 
 
 def _format_profile(profile) -> str:
