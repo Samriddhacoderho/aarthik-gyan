@@ -9,11 +9,14 @@ from schemas.entities import ExtractionResult, parser_extraction as parser
 from prompts.extraction_prompt import EXTRACTION_PROMPT
 from ingestion.batching import batch_chunks, format_batch_for_prompt
 from ingestion.batching import batch_chunks
-from ingestion.batch_runner import run_batches_parallel, retry_failed_batches
+from ingestion.batch_runner import ProgressCallback, run_batches_parallel, retry_failed_batches
 
 
 
-def extract_entities_from_document(chunks: list[str]) -> tuple[ExtractionResult, list[dict]]:
+def extract_entities_from_document(
+    chunks: list[str],
+    on_progress: ProgressCallback | None = None,
+) -> tuple[ExtractionResult, list[dict]]:
     """Batches, extracts in parallel, retries failures once, merges results.
     Returns (merged_result, permanently_failed_batches) — caller decides how
     to treat a document with some permanently failed batches (V3.1: mark as
@@ -21,10 +24,19 @@ def extract_entities_from_document(chunks: list[str]) -> tuple[ExtractionResult,
 
 
     batches = batch_chunks(chunks)
+    total = len(batches)
     print(f"[extractor] {len(chunks)} chunks grouped into {len(batches)} batch(es).")
 
-    results, failures = run_batches_parallel(batches)
-    retried_results, still_failing = retry_failed_batches(failures, max_retries=1)
+    if on_progress is not None:
+        try:
+            on_progress({"event": "batches_planned", "total": total})
+        except Exception:
+            pass
+
+    results, failures = run_batches_parallel(batches, on_progress=on_progress, total=total)
+    retried_results, still_failing = retry_failed_batches(
+        failures, max_retries=1, on_progress=on_progress, total=total
+    )
     results.extend(retried_results)
 
     all_entities = {}

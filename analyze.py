@@ -9,8 +9,6 @@ from workflow.workflow import build_workflow
 from graph.neo4j_client import neo4j_client
 from vectorstore.qdrant_client import vector_store_client
 
-# Which ingested document to analyze. Override on the command line:
-#   python analyze.py "Some_Other_Report.pdf"
 DOCUMENT_FILENAME = "Brightwater_Industrial_Systems_FY2025_Annual_Report.pdf"
 
 FIND_DOCUMENT_QUERY = """
@@ -21,8 +19,6 @@ ORDER BY d.ingested_at DESC
 LIMIT 1
 """
 
-# Same rule main.py uses (pick_primary_company): the Company with the most relationships
-# stated in THIS document. Ties are broken by id so the result is always the same.
 FIND_PRIMARY_COMPANY_QUERY = """
 MATCH (d:Document {hash: $hash})-[:MENTIONS]->(c:Entity {type: 'Company'})
 OPTIONAL MATCH (c)-[r:RELATION]-()

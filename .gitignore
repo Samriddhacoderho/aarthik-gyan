@@ -62,3 +62,16 @@ htmlcov/
 .extraction_cache/
 documents/
 reports/output/
+data/
+
+# V4 frontend
+frontend/node_modules/
+frontend/dist/
+
+# Local launcher runtime (logs)
+.run/
+
+# V4 benchmark artifacts (contain private entity names / live results)
+benchmark/questions.jsonl
+benchmark/results/
+
