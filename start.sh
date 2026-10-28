@@ -313,12 +313,8 @@ if command -v node >/dev/null 2>&1; then
 fi
 
 if [ ! -x "$ROOT_DIR/frontend/node_modules/.bin/vite" ]; then
-  if [ "$INSTALL" -eq 1 ]; then
-    info "Installing frontend dependencies..."
-    npm --prefix "$ROOT_DIR/frontend" install
-  else
-    die "Frontend dependencies are missing. Run: npm --prefix frontend install  (or ./start.sh --install)"
-  fi
+  info "Frontend dependencies are missing; installing them..."
+  npm --prefix "$ROOT_DIR/frontend" install
 fi
 
 # ---------------------------------------------------------------------------
@@ -363,7 +359,7 @@ if [ -n "${PYTHON:-}" ]; then
   if [ -n "$PY_MISSING" ]; then
     err "PYTHON=$PY is missing required packages:"
     printf '  %s\n' "$PY_MISSING" >&2
-    die "Install them with: $PY -m pip install -r requirements-api.txt"
+    die "Install them with: $PY -m pip install -r requirements.txt"
   fi
 else
   CANDIDATES="$ROOT_DIR/.venv/bin/python /opt/anaconda3/envs/ai/bin/python python3 python"
@@ -396,11 +392,11 @@ Fix one of these, then rerun:
        PYTHON=/opt/anaconda3/envs/ai/bin/python ./start.sh
 
   2. Install the missing packages into this project's venv:
-       .venv/bin/python -m pip install -r requirements-api.txt
+       .venv/bin/python -m pip install -r requirements.txt
 
   3. Recreate the venv with access to an existing V3 environment:
        python3 -m venv --system-site-packages .venv
-       .venv/bin/python -m pip install -r requirements-api.txt
+       .venv/bin/python -m pip install -r requirements.txt
 EOF
     exit 1
   fi

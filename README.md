@@ -1,95 +1,38 @@
 # Aarthik Gyan
 
-Aarthik Gyan is a financial document intelligence system that combines a
-Neo4j knowledge graph, Qdrant semantic search, and a human-reviewed
-multi-agent risk-analysis workflow. It ingests financial PDFs, extracts
-structured entities and relationships, answers questions with hybrid
-GraphRAG retrieval, and produces an auditable PDF risk report.
+Aarthik Gyan is a financial document intelligence system for extracting,
+exploring, and reviewing financial risk from PDF reports. It combines a Neo4j
+knowledge graph, Qdrant semantic search, deterministic financial ratios, and a
+human-reviewed multi-agent workflow. V4 adds a browser application and FastAPI
+adapter on top of the V3 GraphRAG backend.
 
-> **Status:** Version 3.0 is complete. The current application is an
-> end-to-end, terminal-operated V3 prototype; production hardening, a user
-> interface, and benchmarking are planned for V4.
+> **Status:** V4 is a working local application. It provides a React review
+> desk, document upload and ingestion, graph exploration, human-in-the-loop
+> analysis, and PDF report downloads. It is not production-hardened and has no
+> built-in authentication.
 
-## What V3 delivers
+## What the application does
 
-The completed V3 pipeline is:
-
-1. Ingest a financial PDF and extract text into overlapping chunks.
-2. Batch chunks for structured LLM extraction with Pydantic schemas.
-3. Run extraction concurrently with bounded workers, rate limiting, caching,
-   retries, and provider fallback.
-4. Resolve duplicate entities and merge entities, relationships, and document
-   metadata into Neo4j.
-5. Generate local embeddings and index document chunks in Qdrant.
-6. Route questions to graph retrieval, vector retrieval, or hybrid retrieval.
-7. Calculate rule-based financial risk scores from extracted metrics and graph
-   context.
-8. Run a LangGraph `StateGraph` with separate Auditor, Quant, HITL, and Writer
+1. Ingests financial PDFs and splits their text into overlapping chunks.
+2. Extracts structured entities, relationships, and financial metrics with
+   Pydantic schemas and LLM providers.
+3. Resolves duplicate entities and stores the resulting graph in Neo4j.
+4. Embeds document chunks and indexes them in Qdrant.
+5. Routes questions to graph retrieval, vector retrieval, or hybrid retrieval.
+6. Calculates transparent, rule-based financial ratios and risk levels.
+7. Runs a LangGraph workflow with Auditor, Quant, human-review, and Writer
    nodes.
-9. Expose graph analytics and retrieval operations through a FastMCP server,
-   with per-node tool allow-lists.
-10. Pause at a human-review checkpoint so an analyst can approve, override, or
-    request a re-run of the risk assessment.
-11. Persist the final decision and review history to Neo4j.
-12. Generate a structured PDF risk report.
+8. Persists assessments, review history, and approval metadata to Neo4j.
+9. Generates a structured PDF risk report.
+10. Exposes the system through both terminal entry points and a browser UI.
 
-The implementation deliberately keeps the risk calculation transparent:
-financial ratios are computed by deterministic rules, while the LLM is used
-for document extraction, routing, findings, and report writing.
-
-## Evolution
-
-### V1.0 — One document, one graph, one answer
-
-V1 established the GraphRAG foundation:
-
-- A single PDF was parsed into a small set of structured entities and
-  relationships: `Company`, `Executive`, `Subsidiary`, `Debt`, and
-  `RiskFactor`.
-- Pydantic structured outputs were written to a local Neo4j graph.
-- One question-answering agent performed Cypher-based multi-hop retrieval.
-
-V1 intentionally did not include vector search, cross-document comparison,
-risk scoring, human review, or PDF reporting. Its purpose was to prove that a
-graph could support more useful multi-hop answers than an unstructured
-baseline.
-
-### V2.0 — Multiple documents and hybrid retrieval
-
-V2 addressed V1's single-document limitation:
-
-- Multiple reports can be ingested and tracked by content hash.
-- Document chunks are embedded and indexed in Qdrant alongside Neo4j.
-- A retrieval router selects graph, vector, or combined retrieval.
-- A rule-based Quant Risk Agent calculates initial financial risk scores.
-- Batch extraction, entity resolution, retries, and provider fallback improve
-  ingestion reliability.
-
-V2 remained a one-shot Q&A system. It did not yet provide a persistent risk
-report or a human review step.
-
-### V3.0 — Multi-agent analysis with human oversight
-
-V3 turns the system into an accountable analysis pipeline:
-
-- **Auditor Agent:** reviews the selected company's profile, graph
-  connections, and document-locked source passages.
-- **Quant Agent:** retrieves historical assessments and document metrics,
-  calculates ratios and risk levels, and uses graph centrality as context.
-- **Human-in-the-loop checkpoint:** an analyst approves the score, overrides
-  it with reviewed values, or requests a bounded re-run with an additional
-  hint.
-- **Executive Writer Agent:** converts the reviewed findings into a report,
-  persists approval metadata and review events, and builds the PDF output.
-- **FastMCP tools:** graph analytics, retrieval, and risk persistence are
-  exposed behind a tool boundary rather than embedded directly in agents.
-
-The review history, final score, override status, and approval metadata are
-persisted so the result is traceable rather than just a transient chat answer.
+Risk calculations remain deterministic and inspectable. LLMs are used for
+document extraction, retrieval routing, findings, and report writing rather
+than for silently replacing the financial rules.
 
 ## Architecture
 
-### Ingestion and question answering
+### Ingestion and retrieval
 
 ```text
 PDF
@@ -109,17 +52,12 @@ Question -> LLM router -> graph retrieval and/or vector retrieval
                          -> answer generation
 ```
 
-The detailed flow is documented in
-[`architecture_diagram/main.mermaid.md`](architecture_diagram/main.mermaid.md)
-and the editable diagram is
-[`architecture_diagram/main.py.drawio`](architecture_diagram/main.py.drawio).
-
 ### Reviewed risk analysis
 
 ```text
-resolve ingested document and company
-                 |
-                 v
+resolve document and company
+             |
+             v
 Auditor -> Quant -> Human review
                        | approve
                        | override -> review again
@@ -132,19 +70,32 @@ Auditor -> Quant -> Human review
       Neo4j audit trail        PDF risk report
 ```
 
-The complete node-level flow, including MCP permissions and database access,
-is documented in
-[`architecture_diagram/analyze.mermaid.md`](architecture_diagram/analyze.mermaid.md)
+The detailed diagrams are available in
+[`architecture_diagram/main.mermaid.md`](architecture_diagram/main.mermaid.md)
 and
-[`architecture_diagram/analyze.py.drawio`](architecture_diagram/analyze.py.drawio).
+[`architecture_diagram/analyze.mermaid.md`](architecture_diagram/analyze.mermaid.md).
+Editable Draw.io versions are stored beside them.
+
+### Why the V4 API is a thin adapter
+
+The V3 backend validates configuration and initializes some database clients at
+import time. The V4 API avoids importing those modules eagerly so that it can
+start and expose health checks even when Neo4j or Qdrant is unavailable. It:
+
+1. Keeps API settings in [`api/settings.py`](api/settings.py).
+2. Imports V3 modules lazily inside request handlers and background jobs.
+3. Reuses `main.ingest`, `workflow.workflow.build_workflow`, and LangGraph
+   `Command(resume=...)` instead of duplicating orchestration.
+
+V3 backend modules remain the source of truth for ingestion, retrieval, risk
+rules, workflow behavior, MCP boundaries, and report generation.
 
 ## Graph and retrieval model
 
 Neo4j uses the `Entity` label with stable lowercase snake-case identifiers.
-The supported entity categories include `Company`, `Executive`, `Subsidiary`,
+Supported entity categories include `Company`, `Executive`, `Subsidiary`,
 `RiskFactor`, and `Auditor`. Relationships include `OWNS`, `OWES_DEBT_TO`,
-`SUPPLIES_TO`, `AUDITED_BY`, `EMPLOYS`, `FLAGGED_FOR`, and
-`SUBSIDIARY_OF`.
+`SUPPLIES_TO`, `AUDITED_BY`, `EMPLOYS`, `FLAGGED_FOR`, and `SUBSIDIARY_OF`.
 
 Company risk assessments can include:
 
@@ -158,30 +109,33 @@ Company risk assessments can include:
 The retrieval router classifies questions as `GRAPH`, `VECTOR`, or `BOTH`.
 Graph retrieval is suited to structural questions such as ownership and debt
 relationships. Vector retrieval is suited to fuzzy language and source
-passages such as concerning statements or disclosed risks. Hybrid retrieval
-combines both kinds of evidence.
+passages such as disclosed risks. Hybrid retrieval combines both kinds of
+evidence.
 
 ## MCP tool boundaries
 
-The workflow uses per-node allow-lists in
+Per-node tool allow-lists are defined in
 [`workflow/mcp_client.py`](workflow/mcp_client.py). Calls to tools outside a
 node's allow-list raise `PermissionError`.
 
 | Node | Allowed tools | Responsibility |
 | --- | --- | --- |
-| Auditor | `get_company_profile`, `get_connected_entities`, `retrieve_footnote_context` | Build an evidence-based audit view. The LLM receives only the document-locked `search_this_document` wrapper. |
-| Quant | `get_debt_ratios`, `calculate_graph_centrality`, `retrieve_footnote_context`, `save_risk_assessment` | Calculate and persist the system-generated risk assessment. |
-| Writer | Workflow persistence and report-building operations | Persist the approved decision, review events, and PDF report. |
+| Auditor | `get_company_profile`, `get_connected_entities`, `retrieve_footnote_context` | Build an evidence-based audit view |
+| Quant | `get_debt_ratios`, `calculate_graph_centrality`, `retrieve_footnote_context`, `save_risk_assessment` | Calculate and persist the system-generated assessment |
+| Writer | Workflow persistence and report-building operations | Persist the approved decision and build the PDF |
 
-The document hash is required for source-context retrieval, preventing the
-auditor or quant node from silently searching unrelated documents.
+Source-context retrieval requires the document hash. This prevents the Auditor
+and Quant nodes from silently searching unrelated documents.
 
 ## Project structure
 
 ```text
 .
 ├── agent/                 # Question answering and Cypher generation
+├── api/                   # FastAPI adapter, routes, schemas, and services
+├── benchmark/             # GraphRAG versus plain-vector-RAG harness
 ├── documents/             # Sample financial PDFs
+├── frontend/              # React, TypeScript, and Vite review desk
 ├── graph/                 # Neo4j client, queries, and graph writers
 ├── ingestion/             # PDF parsing, batching, extraction, and resolution
 ├── llm/                   # Provider fallback, rate limiting, text utilities
@@ -192,56 +146,216 @@ auditor or quant node from silently searching unrelated documents.
 ├── risk/                  # Metric retrieval, ratios, and risk scoring
 ├── schemas/               # Pydantic entity, audit, risk, and report models
 ├── vectorstore/           # Embeddings, Qdrant client, and indexing
-├── workflow/
-│   ├── nodes/             # Auditor, Quant, HITL, and Writer nodes
-│   ├── mcp_client.py      # Per-node MCP sessions and allow-lists
-│   ├── scoped_tools.py    # Document-locked auditor search tool
-│   ├── state.py           # LangGraph workflow state
-│   └── workflow.py        # StateGraph definition
+├── workflow/              # LangGraph state, nodes, review, and MCP sessions
 ├── architecture_diagram/  # Mermaid and Draw.io architecture diagrams
 ├── analyze.py             # Human-reviewed risk-analysis entry point
-├── config.py              # Environment-backed configuration
+├── config.py              # V3 environment-backed configuration
 ├── main.py                # Ingestion and question-answering entry point
-├── requirements.txt
-└── .env.example
+├── start.sh               # Local V4 launcher
+└── requirements.txt       # All Python dependencies
 ```
 
-## Prerequisites
+## Requirements
 
-- Python 3.10 or newer
+- Python 3.12 with the V3 backend configured
+- Node.js 20+ and npm
 - A reachable Neo4j database or Neo4j Aura instance
-- Google Gemini and Groq API keys
 - A local or hosted Qdrant instance
+- Google Gemini and Groq API keys
 - A Hugging Face token for the configured embedding provider
-- Node.js or an MCP-compatible client when using MCP tools
+- The V3 MCP server on `127.0.0.1:8000` for browser-based analysis runs
 
-## Setup
+Python 3.10+ is sufficient for the original V3 command-line workflow, but the
+V4 API and development dependency set target Python 3.12.
 
-1. Create and activate a virtual environment:
+## Quick start
+
+From a new device, run:
+
+1. Clone the repository and enter it:
 
    ```bash
-   python -m venv .venv
+   git clone https://github.com/Samriddhacoderho/aarthik-gyan.git
+   cd aarthik-gyan
+   ```
+
+2. Create and activate a Python 3.12 virtual environment:
+
+   ```bash
+   python3.12 -m venv .venv
    source .venv/bin/activate
    ```
 
-2. Install dependencies:
+3. Install all Python dependencies:
 
    ```bash
    pip install -r requirements.txt
    ```
 
-3. Create local configuration:
+   This single file includes the V3 backend, V4 API, ingestion, and test
+   dependencies.
+
+4. Create the local environment file:
 
    ```bash
    cp .env.example .env
    ```
 
-   Configure `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`,
-   `GOOGLE_API_KEY`, `GROQ_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`, and
+5. Add the required credentials to `.env`. Configure
+   `NEO4J_URI`, `NEO4J_USERNAME`, `NEO4J_PASSWORD`, `GOOGLE_API_KEY`,
+   `GROQ_API_KEY`, `QDRANT_URL`, `QDRANT_API_KEY`, and
    `HUGGINGFACEHUB_API_TOKEN` as applicable. Never commit `.env` or real
    credentials.
 
-## Running the application
+6. Start the application:
+
+   ```bash
+   ./start.sh
+   ```
+
+   `start.sh` automatically runs `npm --prefix frontend install` when the
+   frontend dependencies are missing, so a separate npm installation step is
+   not required.
+
+If `python3.12` is not available on your system, install Python 3.12 first or
+use another supported Python interpreter, for example:
+
+```bash
+python3 -m venv .venv
+```
+
+The launcher requires Node.js 20+ and npm to perform the automatic frontend
+installation.
+
+## Installation details
+
+The V4 requirements include the backend dependencies. If using a shared
+environment, a venv created with `--system-site-packages` also works.
+
+## Running the V4 browser application
+
+### One command
+
+```bash
+./start.sh
+```
+
+The launcher starts the V3 MCP server, API, and Vite development server,
+prefixes their logs, waits for readiness, opens `http://localhost:5173`, and
+stops all three on **Ctrl+C**. Logs are written to `.run/logs/`.
+
+```bash
+./start.sh --install    # retained for compatibility; missing dependencies auto-install
+./start.sh --force      # stop existing listeners on ports 8000, 8001, 5173
+./start.sh --no-open    # do not open the browser
+./start.sh --help
+```
+
+The API uses port `8001` because the MCP server uses port `8000`. To select a
+complete Python environment explicitly:
+
+```bash
+PYTHON=/path/to/python ./start.sh
+```
+
+### Manual run
+
+Terminal 1 — MCP server:
+
+```bash
+python -m mcp_server.server
+```
+
+Terminal 2 — API:
+
+```bash
+python -m uvicorn api.main:app --host 127.0.0.1 --port 8001
+```
+
+Terminal 3 — frontend:
+
+```bash
+npm --prefix frontend run dev
+```
+
+Open `http://localhost:5173`. Vite proxies `/api` to
+`http://127.0.0.1:8001`.
+
+For a single-origin production-style local run:
+
+```bash
+npm --prefix frontend run build
+python -m uvicorn api.main:app --host 127.0.0.1 --port 8001
+```
+
+When `frontend/dist` exists, [`api/main.py`](api/main.py) serves it with an SPA
+fallback and never serves files outside that directory.
+
+### Fresh start from an empty graph
+
+The launcher does not seed demo data. After resetting Neo4j and Qdrant, open
+**Upload**, choose a PDF, and wait for ingestion to reach `completed`. The
+document then appears in **Overview** and the analysis document picker.
+
+## V4 API
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/health/live` | Process liveness without database calls |
+| `GET` | `/api/health/ready` | Neo4j and Qdrant connectivity |
+| `GET` | `/api/documents` | Document registry |
+| `GET` | `/api/documents/{hash}` | One document registry entry |
+| `GET` | `/api/documents/{hash}/companies` | Companies mentioned by a document |
+| `GET` | `/api/documents/{hash}/search` | Scoped Qdrant evidence search |
+| `POST` | `/api/documents` | Validate, store, and ingest a PDF |
+| `GET` | `/api/jobs` | In-process ingestion jobs |
+| `GET` | `/api/jobs/{id}` | One ingestion job |
+| `GET` | `/api/companies` | Company summaries |
+| `GET` | `/api/companies/{id}` | One company |
+| `GET` | `/api/companies/{id}/dashboard` | Company dashboard data |
+| `GET` | `/api/companies/{id}/assessments` | Assessment ledger |
+| `GET` | `/api/companies/{id}/graph?depth=1` | Bounded graph neighborhood |
+| `GET` | `/api/analyses` | Process-local analysis sessions |
+| `POST` | `/api/analyses` | Start a background V3 workflow |
+| `GET` | `/api/analyses/{id}` | Workflow/session state |
+| `POST` | `/api/analyses/{id}/review` | Resume the HITL review |
+| `GET` | `/api/analyses/{id}/report` | Download the generated PDF |
+
+Interactive API documentation is available at
+`http://localhost:8001/api/docs`; the OpenAPI document is at
+`http://localhost:8001/api/openapi.json`.
+
+API errors use one shape:
+
+```json
+{"error": {"code": "validation_error", "message": "Request validation failed.", "details": []}}
+```
+
+## Browser user journeys
+
+1. **Overview** shows document, company, and assessment counts, service
+   readiness, and the latest assessment ledger.
+2. **Upload** validates PDF content, magic bytes, size, and SHA-256 hash before
+   starting a background ingestion job.
+3. **Ingestion progress** polls the real job state and reports queued, running,
+   completed, or failed status.
+4. **Analysis setup** lets the user choose a completed or partial document and
+   one of the companies actually mentioned in it.
+5. **Review workspace** shows ratios, analyst findings, source evidence, and
+   the HITL decision card.
+6. **Results and report** shows the final score, system-score comparison,
+   review trail, and PDF download.
+
+The browser polls analysis sessions until they reach `awaiting_review`,
+`completed`, or `failed`. The LangGraph `MemorySaver`, analysis sessions, and
+ingestion jobs are process-local and are lost when the API restarts. Run one
+API worker; multiple workers require a shared session store and checkpointer.
+
+For overrides, the UI sends `risk_level` only when the analyst explicitly
+chooses a level. **Auto from ratios** recalculates the level and notes from
+corrected ratios using the existing V3 review logic.
+
+## V3 command-line workflows
 
 ### Ingest and ask questions
 
@@ -249,10 +363,9 @@ auditor or quant node from silently searching unrelated documents.
 python main.py
 ```
 
-This verifies Neo4j and Qdrant connectivity, skips already-completed
-documents using their SHA-256 hash, ingests the configured PDF, indexes its
-chunks, calculates an initial draft assessment when possible, and answers a
-question using routed retrieval.
+This checks Neo4j and Qdrant, skips documents already ingested by SHA-256 hash,
+ingests the configured PDF, indexes its chunks, calculates an initial
+assessment when possible, and answers a question using routed retrieval.
 
 ### Run the reviewed risk workflow
 
@@ -266,23 +379,47 @@ The terminal workflow asks for the reviewer, runs the Auditor and Quant nodes,
 pauses for approval, override, or re-run, and writes the final report to
 `reports/output/`.
 
-### Start the MCP server
+### Run the MCP server directly
 
 ```bash
 python -m mcp_server.server
 ```
 
-The default FastMCP HTTP endpoint is `http://127.0.0.1:8000`. The server is
-intended for local development and must be secured before network deployment.
+The default FastMCP endpoint is `http://127.0.0.1:8000`. It is intended for
+local development and must be secured before network deployment.
 
-### Run the offline MCP wiring test
+### Offline MCP wiring test
 
 ```bash
 python tests/test_mcp_scoping.py
 ```
 
-This test uses fake databases and does not require API keys, Neo4j, or Qdrant.
-It verifies tool scoping, document locking, and the quant workflow wiring.
+This uses fake databases and does not require API keys, Neo4j, or Qdrant. It
+verifies tool scoping, document locking, and Quant workflow wiring.
+
+## Tests and checks
+
+```bash
+.venv/bin/pytest -q api/tests benchmark/tests
+npm --prefix frontend run typecheck
+npm --prefix frontend run build
+```
+
+The browser and API tests are designed to run without executing live ingestion
+or analysis. Those paths write to Neo4j/Qdrant and call live LLMs, so run them
+manually with real credentials when needed.
+
+## Benchmark
+
+See [`benchmark/README.md`](benchmark/README.md). The harness uses the real V3
+router and vector store, generates questions read-only from the operator's
+graph, and writes results only from actual runs. No benchmark numbers are
+claimed until the operator runs it.
+
+```bash
+python -m benchmark.generate_questions --count 50
+python -m benchmark.run_benchmark --dataset benchmark/questions.jsonl --answer
+```
 
 ## Configuration and operational notes
 
@@ -292,45 +429,34 @@ It verifies tool scoping, document locking, and the quant workflow wiring.
   `.extraction_cache`.
 - Provider selection and fallback are centralized in
   [`llm/provider.py`](llm/provider.py).
-- Risk scores are analytical estimates derived from document disclosures, not
+- One ingestion runs at a time through a process lock.
+- Risk scores are analytical estimates from document disclosures, not
   professional financial advice.
 
-## Current limitations
+## Security and limitations
 
-- There is no web UI or graph exploration interface; operation is currently
-  through terminal entry points.
-- Ingestion is manual and one-off rather than an asynchronous background
-  pipeline with progress polling.
-- PDF extraction focuses on text and does not yet robustly extract tables,
-  images, or complex layouts.
-- Retrieval routing, extraction, and report writing depend on LLM output and
-  can be incorrect.
-- Risk scoring is rule-based and depends on metrics successfully extracted
-  from source text.
-- Qdrant must be reachable before application startup.
+- No API keys or secrets are sent to the frontend or stored in browser storage.
+  Only the reviewer display name is persisted by the browser.
+- Uploads are PDF-only, size-limited, SHA-256 named, and stored under
+  `data/uploads` (git-ignored).
+- Report downloads are restricted to `reports/output`; path traversal is
+  rejected.
+- The graph explorer is read-only. Writes use the existing V3 ingestion and
+  workflow paths.
+- There is no authentication or multi-tenant isolation. Put the application
+  behind appropriate access control before exposing it beyond localhost.
+- Sessions, jobs, and checkpoints are in memory and single-process.
+- Ingestion progress is coarse because the adapter does not expose per-batch
+  progress events.
+- PDF extraction does not yet robustly handle tables, images, or complex
+  layouts.
+- Retrieval, extraction, and report writing depend on LLM output and can be
+  incorrect.
+- Qdrant must be reachable before the relevant application paths can operate.
 - Provenance is stronger for vector chunks than for every graph entity and
   relationship.
-- The MCP server has no production authentication or deployment configuration.
 - Automated coverage, observability, and production-scale evaluation remain
   incomplete.
-
-## V4 roadmap
-
-V4 is intended to make the system presentable and measurable:
-
-1. Add a React frontend with Cytoscape.js or Vis.js graph visualization.
-2. Add a review card for the HITL decision, modeled on the existing terminal
-   review flow.
-3. Move ingestion to an asynchronous background pipeline with status polling.
-4. Benchmark GraphRAG against plain vector RAG on approximately 50 multi-hop
-   questions.
-5. Measure retrieval accuracy, answer quality, and hallucination rate.
-6. Add broader automated tests, observability, authentication, and deployment
-   guidance.
-
-The benchmark is the research contribution: it evaluates whether graph-aware
-retrieval improves multi-hop financial question answering rather than merely
-demonstrating another RAG application.
 
 ## Maintainer
 
