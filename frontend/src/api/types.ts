@@ -110,16 +110,39 @@ export interface UploadResponse {
   message: string;
 }
 
+export type BatchStatus = "pending" | "running" | "cached" | "completed" | "failed";
+
+export interface BatchProgress {
+  index: number;
+  status: BatchStatus;
+  entities: number | null;
+  cached: boolean;
+  error: string | null;
+}
+
 export interface JobResponse {
   job_id: string;
   status: string;
+  stage: string;
   filename: string;
   document_hash: string;
   created_at: string;
   updated_at: string;
+  batch_total: number;
+  batches: BatchProgress[];
   document: DocumentSummary | null;
   error: string | null;
   persistent: boolean;
+}
+
+export interface DeleteDocumentResponse {
+  document_hash: string;
+  filename: string | null;
+  deleted_entities: number;
+  deleted_relationships: number;
+  deleted_assessments: number;
+  deleted_points: number;
+  upload_removed: boolean;
 }
 
 export interface ReviewPayload {
@@ -167,4 +190,10 @@ export interface EvidenceSearchResponse {
   document_hash: string;
   query: string;
   results: EvidenceHit[];
+}
+
+export interface AskResponse {
+  document_hash: string;
+  question: string;
+  answer: string;
 }

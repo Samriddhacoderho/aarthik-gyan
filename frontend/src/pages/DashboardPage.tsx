@@ -35,6 +35,11 @@ interface OverviewState {
   readiness: ReadinessResponse | null;
 }
 
+const CHECK_LABELS: Record<string, string> = {
+  neo4j: "Graph database",
+  qdrant: "Evidence index",
+};
+
 export function DashboardPage() {
   const [state, setState] = useState<OverviewState>({
     documents: [],
@@ -89,7 +94,7 @@ export function DashboardPage() {
 
       <section className="bento hero-grid">
         <div className="bento-card hero-card span-8">
-          <p className="eyebrow">Auditable GraphRAG for finance teams</p>
+          <p className="eyebrow">Auditable analysis for finance teams</p>
           <h2 className="hero-title">
             Read the report.
             <br />
@@ -113,15 +118,14 @@ export function DashboardPage() {
             </Link>
           </div>
           <div className="hero-rule">
-            <span>V3 workflow preserved</span>
-            <span>Auditor → Quant → HITL → Writer</span>
+            <span>Auditor → Quant → Review → Report</span>
           </div>
         </div>
 
         <div className="bento-card span-4 readiness-card">
           <div className="panel-head bare">
             <div>
-              <p className="eyebrow">Backend readiness</p>
+              <p className="eyebrow">Workspace status</p>
               <h2 className="panel-title">Live checks</h2>
             </div>
             <span className={`status-dot ${state.readiness?.status === "ready" ? "ok" : "warn"}`} />
@@ -134,20 +138,19 @@ export function DashboardPage() {
                     <Icon name={check.ok ? "check" : "alert"} size={13} />
                   </span>
                   <div>
-                    <strong>{titleCase(check.name)}</strong>
-                    <small>{check.ok ? "Connected" : check.detail ?? "Unavailable"}</small>
+                    <strong>{CHECK_LABELS[check.name] ?? titleCase(check.name)}</strong>
+                    <small>{check.ok ? "Connected" : "Unavailable"}</small>
                   </div>
                 </div>
               ))}
               <div className="check-note">
-                The MCP server is a separate process. Run{" "}
-                <code>python -m mcp_server.server</code> before an analysis.
+                An analysis needs every check above to pass.
               </div>
             </div>
           ) : (
             <div className="check-list">
               <div className="check-note">
-                Readiness is unavailable. The API itself may still be starting.
+                Status is temporarily unavailable. Try again shortly.
               </div>
             </div>
           )}
@@ -176,7 +179,7 @@ export function DashboardPage() {
           <Metric
             label="Relationships"
             value={loading ? "—" : fmtNumber(state.dashboard?.totals.relationships ?? 0, 0)}
-            hint="Typed RELATION edges"
+            hint="Links between entities"
           />
         </div>
       </section>
@@ -315,7 +318,7 @@ export function DashboardPage() {
           <span className="step-number">01</span>
           <Icon name="upload" size={20} />
           <h3>Ingest the source</h3>
-          <p>Text extraction, entity resolution, Neo4j writes and Qdrant chunk indexing.</p>
+          <p>Text extraction, entity resolution, and searchable evidence indexing.</p>
         </div>
         <div className="bento-card span-4 flow-step">
           <span className="step-number">02</span>
@@ -327,7 +330,7 @@ export function DashboardPage() {
           <span className="step-number">03</span>
           <Icon name="shield" size={20} />
           <h3>Approve the decision</h3>
-          <p>Pause at the LangGraph interrupt. Only a confirmed backend response finalises the report.</p>
+          <p>Pause at the human review checkpoint. Only a confirmed approval finalises the report.</p>
         </div>
       </section>
     </div>

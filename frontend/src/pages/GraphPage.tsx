@@ -99,7 +99,7 @@ export function GraphPage() {
       <Panel>
         <EmptyState
           title="No companies in the graph"
-          body="Ingest a financial document first. The graph explorer reads the Company entities created by the V3 pipeline."
+          body="Ingest a financial document first. The graph explorer reads the companies found in your uploaded documents."
           action={
             <Link className="button button-primary button-small" to="/documents">
               Upload a PDF
@@ -116,12 +116,11 @@ export function GraphPage() {
 
       <section className="page-intro graph-intro">
         <div>
-          <p className="eyebrow">Neo4j explorer</p>
+          <p className="eyebrow">Evidence explorer</p>
           <h2>Trace the relationships behind the score.</h2>
           <p>
-            The map is generated from <code>:RELATION</code> edges written by the existing ingestion
-            pipeline. Click a node to inspect its type and direct neighbours; use the depth control to
-            expand one or two hops.
+            The map is built from the relationships found in your uploaded documents. Click a node to
+            inspect its type and direct neighbours; use the depth control to expand one or two hops.
           </p>
         </div>
         <div className="graph-toolbar">
@@ -205,7 +204,7 @@ export function GraphPage() {
           ) : (
             <EmptyState
               title="Graph unavailable"
-              body="Select a company and retry. If the problem persists, check Neo4j connectivity."
+              body="Select a company and retry. If the problem persists, contact your administrator."
             />
           )}
         </Panel>
@@ -246,8 +245,8 @@ export function GraphPage() {
               </div>
             ) : (
               <p className="inspector-hint">
-                Click any node in the map. The inspector is a read-only view; the graph itself is only
-                mutated by the ingestion pipeline.
+                Click any node in the map. The inspector is a read-only view; the graph itself only
+                changes when a document is ingested.
               </p>
             )}
           </Panel>

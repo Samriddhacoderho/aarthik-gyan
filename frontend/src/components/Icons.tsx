@@ -16,7 +16,9 @@ type IconName =
   | "building"
   | "scale"
   | "spark"
-  | "external";
+  | "external"
+  | "chat"
+  | "trash";
 
 interface IconProps {
   name: IconName;
@@ -160,6 +162,20 @@ export function Icon({ name, size = 18, strokeWidth = 1.7 }: IconProps) {
         <svg {...common}>
           <path d="M14 4h6v6M20 4l-8 8" />
           <path d="M19 14v4.2A1.8 1.8 0 0 1 17.2 20H5.8A1.8 1.8 0 0 1 4 18.2V6.8A1.8 1.8 0 0 1 5.8 5H10" />
+        </svg>
+      );
+    case "chat":
+      return (
+        <svg {...common}>
+          <path d="M20 12.2a7.6 7.6 0 0 1-11 6.8L4 20l1.1-4.3A7.6 7.6 0 1 1 20 12.2Z" />
+          <path d="M9 11.5h6M9 14.5h4" />
+        </svg>
+      );
+    case "trash":
+      return (
+        <svg {...common}>
+          <path d="M4 7h16M9 7V5h6v2M6.5 7l.8 12.2A1.8 1.8 0 0 0 9.1 21h5.8a1.8 1.8 0 0 0 1.8-1.8L17.5 7" />
+          <path d="M10 11v6M14 11v6" />
         </svg>
       );
   }

@@ -144,7 +144,7 @@ export function AnalysisPage() {
           <StatusBadge status={analysis.status} />
           <span className="pill pill-quiet">
             <Icon name="clock" size={13} />
-            Process-local session
+            Live review session
           </span>
         </div>
       </section>
@@ -159,7 +159,7 @@ export function AnalysisPage() {
         <Panel>
           <div className="running-inline">
             <Spinner label="The workflow is still running" />
-            <p>This page polls the API until the next interrupt or completion.</p>
+            <p>This page updates automatically until the next review checkpoint or completion.</p>
           </div>
         </Panel>
       )}
@@ -467,8 +467,8 @@ function ReviewCard({
 
       {action === "approve" && (
         <p className="action-copy">
-          Accept the score shown above. The Writer will record the approval in Neo4j and generate
-          the PDF report.
+          Accept the score shown above. The Writer will record the approval and generate the PDF
+          report.
         </p>
       )}
       {action === "override" && (
@@ -556,7 +556,7 @@ function ReviewCard({
         disabled={submitting}
       >
         {submitting ? (
-          <Spinner label="Waiting for backend confirmation" />
+          <Spinner label="Saving your decision" />
         ) : (
           <>
             {action === "approve"
@@ -569,8 +569,7 @@ function ReviewCard({
         )}
       </button>
       <p className="form-note">
-        The UI only shows success after the backend returns an approval record or a new review
-        checkpoint. The LangGraph checkpoint is held in API memory and is lost on restart.
+        Success is shown only after the decision is saved. Keep this page open until then.
       </p>
     </Panel>
   );
@@ -750,7 +749,7 @@ function ResultView({ analysis }: { analysis: AnalysisResponse }) {
           )}
         </Panel>
 
-        <Panel eyebrow="Backend truth" title="What was verified">
+        <Panel eyebrow="Verification" title="What was verified">
           <ul className="verified-list">
             <li>
               <Icon name="check" size={15} /> Approval record returned by the workflow
@@ -762,10 +761,6 @@ function ResultView({ analysis }: { analysis: AnalysisResponse }) {
               <Icon name="check" size={15} /> Review events appended to the existing audit trail
             </li>
           </ul>
-          <p className="form-note">
-            Session status is process-local. The graph and PDF persist; the in-memory review session
-            does not.
-          </p>
         </Panel>
       </div>
     </section>

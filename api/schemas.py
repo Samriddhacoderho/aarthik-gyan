@@ -136,6 +136,16 @@ class EvidenceSearchResponse(BaseModel):
     results: list[EvidenceHit] = Field(default_factory=list)
 
 
+class AskRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=1000)
+
+
+class AskResponse(BaseModel):
+    document_hash: str
+    question: str
+    answer: str
+
+
 class UploadResponse(BaseModel):
     job_id: str
     status: str
@@ -146,6 +156,14 @@ class UploadResponse(BaseModel):
     message: str = "Ingestion jobs are held in this API process only."
 
 
+class BatchProgress(BaseModel):
+    index: int
+    status: Literal["pending", "running", "cached", "completed", "failed"] = "pending"
+    entities: int | None = None
+    cached: bool = False
+    error: str | None = None
+
+
 class JobResponse(BaseModel):
     job_id: str
     status: str
@@ -153,9 +171,22 @@ class JobResponse(BaseModel):
     document_hash: str
     created_at: str
     updated_at: str
+    stage: str = "queued"
+    batch_total: int = 0
+    batches: list[BatchProgress] = Field(default_factory=list)
     document: DocumentSummary | None = None
     error: str | None = None
     persistent: bool = False
+
+
+class DeleteDocumentResponse(BaseModel):
+    document_hash: str
+    filename: str | None = None
+    deleted_entities: int = 0
+    deleted_relationships: int = 0
+    deleted_assessments: int = 0
+    deleted_points: int = 0
+    upload_removed: bool = False
 
 
 class AnalysisStartRequest(BaseModel):

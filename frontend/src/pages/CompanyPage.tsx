@@ -244,7 +244,7 @@ export function CompanyPage() {
           ) : (
             <EmptyState
               title="No risk assessment recorded"
-              body="Ingestion should create a draft assessment. If it did not, run the reviewed workflow on a completed document."
+              body="A draft assessment appears after a document is ingested. If it is missing, start an analysis on a completed document."
               action={
                 <Link className="button button-primary button-small" to="/analyses/new">
                   Start an analysis
@@ -280,7 +280,7 @@ export function CompanyPage() {
           ) : (
             <EmptyState
               title="No relationships found"
-              body="This company has no RELATION edges in the graph yet. Re-ingest the source document or inspect the graph after another document is added."
+              body="This company has no recorded relationships yet. Ingest a source document that mentions it."
             />
           )}
         </Panel>

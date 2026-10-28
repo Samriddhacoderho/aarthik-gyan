@@ -16,11 +16,16 @@ const TITLES: Record<string, string> = {
   "/graph": "Graph explorer",
 };
 
+function pageTitle(pathname: string): string {
+  if (TITLES[pathname]) return TITLES[pathname];
+  if (pathname.startsWith("/analyses/")) return "Review workspace";
+  if (/^\/documents\/[^/]+\/ask$/.test(pathname)) return "Document assistant";
+  return "Aarthik Gyan";
+}
+
 export function AppShell() {
   const location = useLocation();
-  const title =
-    TITLES[location.pathname] ??
-    (location.pathname.startsWith("/analyses/") ? "Review workspace" : "Aarthik Gyan");
+  const title = pageTitle(location.pathname);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -56,15 +61,11 @@ export function AppShell() {
         </nav>
 
         <div className="sidebar-note">
-          <span className="note-label">V3 preserved</span>
-          <p>
-            GraphRAG, LangGraph orchestration, HITL semantics and report conventions remain in the
-            original backend.
-          </p>
+          <span className="note-label">Human review</span>
+          <p>Every estimate pauses for an analyst before a report is finalised.</p>
         </div>
 
         <div className="sidebar-footer">
-          <span>V4.0</span>
           <span>Review workspace</span>
         </div>
       </aside>
@@ -80,16 +81,6 @@ export function AppShell() {
               <Icon name="shield" size={14} />
               Human-reviewed
             </span>
-            <a
-              className="pill pill-quiet pill-link"
-              href="/api/docs"
-              target="_blank"
-              rel="noreferrer"
-              title="Open FastAPI documentation"
-            >
-              API docs
-              <Icon name="external" size={13} />
-            </a>
           </div>
         </header>
 
@@ -98,7 +89,7 @@ export function AppShell() {
         </main>
 
         <footer className="page-footer">
-          <span>Aarthik Gyan V4</span>
+          <span>Aarthik Gyan</span>
           <span>Analytical estimates, not professional financial advice.</span>
         </footer>
       </div>

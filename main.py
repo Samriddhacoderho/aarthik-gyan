@@ -24,7 +24,17 @@ def pick_primary_company(result):
         if r.target_id in counts: counts[r.target_id] += 1
     return companies[max(counts, key=counts.get)] if counts else None
 
-def ingest(file_path: str):
+def _report(on_progress, event: dict):
+    """Progress callbacks are optional and must never interrupt ingestion."""
+    if on_progress is None:
+        return
+    try:
+        on_progress(event)
+    except Exception:
+        pass
+
+
+def ingest(file_path: str, on_progress=None):
     file_hash = compute_file_hash(file_path)
     filename = file_path.split("/")[-1]
 
@@ -34,24 +44,29 @@ def ingest(file_path: str):
 
     neo4j_client.run_query(CREATE_DOCUMENT_NODE_QUERY, {"hash": file_hash, "filename": filename})
 
+    _report(on_progress, {"event": "stage", "stage": "reading"})
     print(f"[main] Reading {file_path}...")
     docs = extract_text_from_pdf(file_path)
     chunks = chunk_text(docs)
     print(f"[main] Split into {len(chunks)} chunks.")
 
     try:
-        result, failed_batches = extract_entities_from_document(chunks)
+        _report(on_progress, {"event": "stage", "stage": "extracting"})
+        result, failed_batches = extract_entities_from_document(chunks, on_progress=on_progress)
         print(f"[main] Extracted {len(result.entities)} entities, {len(result.relationships)} relationships "
               f"({len(failed_batches)} batch(es) permanently failed).")
 
         result = resolve_entities(result)
         print(f"[main] After dedup: {len(result.entities)} entities.")
 
+        _report(on_progress, {"event": "stage", "stage": "writing"})
         write_extraction_to_graph(result, file_hash)
+        _report(on_progress, {"event": "stage", "stage": "indexing"})
         index_chunks(chunks, filename, file_hash)
 
         primary = pick_primary_company(result)
         if primary:
+            _report(on_progress, {"event": "stage", "stage": "risk"})
             run_risk_agent(primary.id, primary.name, file_hash)
 
         if failed_batches:
@@ -59,6 +74,7 @@ def ingest(file_path: str):
         else:
             register_document(file_hash, filename, len(result.entities), len(result.relationships))
 
+        _report(on_progress, {"event": "stage", "stage": "done"})
         print("[main] Ingestion complete.")
     except Exception as e:
         print(f"[main] Ingestion failed: {e}")

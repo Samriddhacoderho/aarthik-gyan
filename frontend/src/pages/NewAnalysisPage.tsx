@@ -132,11 +132,11 @@ export function NewAnalysisPage() {
         <p className="eyebrow">Analysis in progress</p>
         <h2>The Auditor and Quant are working.</h2>
         <p>
-          The backend is reviewing the company profile, document passages, prior assessments and
-          graph position. The workflow will stop at the human-review checkpoint; no approval is
+          The workspace is reviewing the company profile, document passages, prior assessments and
+          graph position. The workflow will stop at the human review checkpoint; no approval is
           assumed.
         </p>
-        <Spinner label="Waiting for the LangGraph interrupt" />
+        <Spinner label="Waiting for the human review checkpoint" />
       </div>
     );
   }
@@ -150,16 +150,13 @@ export function NewAnalysisPage() {
           <p className="eyebrow">Reviewed risk workflow</p>
           <h2>Start with a document and a company.</h2>
           <p>
-            This starts the same LangGraph workflow used by <code>analyze.py</code>: Auditor, Quant,
-            then a human-review interrupt. Nothing is approved until you submit a review action and
-            the backend confirms it.
+            This runs the standard review workflow — Auditor, Quant, then a human review checkpoint.
+            Nothing is approved until you submit a review and it is confirmed.
           </p>
         </div>
         <div className="intro-note">
           <Icon name="alert" size={18} />
-          <span>
-            The MCP server must be running separately: <code>python -m mcp_server.server</code>
-          </span>
+          <span>You can review, override, or re-run before a report is generated.</span>
         </div>
       </section>
 
@@ -233,7 +230,7 @@ export function NewAnalysisPage() {
             ) : companies.length === 0 ? (
               <EmptyState
                 title="No company is linked to this document"
-                body="The analysis can only score a Company that this document mentions. Re-check ingestion before starting an analysis."
+                body="The analysis can only score a company that this document mentions. Upload or retry the document before starting an analysis."
               />
             ) : (
               <>
@@ -286,8 +283,8 @@ export function NewAnalysisPage() {
                   <Icon name="arrow" size={16} />
                 </button>
                 <p className="form-note">
-                  The workflow may take a minute or more depending on LLM provider latency. The
-                  review session is held in API memory and does not survive a restart.
+                  The workflow may take a minute or more. Keep this page open until the review
+                  checkpoint appears.
                 </p>
               </>
             )}

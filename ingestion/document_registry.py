@@ -12,7 +12,8 @@ SET d.filename = $filename,
     d.status = $status,
     d.ingested_at = datetime(),
     d.entity_count = $entity_count,
-    d.relationship_count = $relationship_count
+    d.relationship_count = $relationship_count,
+    d.failed_batch_count = null
 RETURN d
 """
 
@@ -31,7 +32,8 @@ MARK_FAILED_QUERY = """
 MERGE (d:Document {hash: $hash})
 SET d.filename = $filename,
     d.status = 'failed',
-    d.ingested_at = datetime()
+    d.ingested_at = datetime(),
+    d.failed_batch_count = null
 RETURN d
 """
 

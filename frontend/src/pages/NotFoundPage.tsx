@@ -6,7 +6,7 @@ export function NotFoundPage() {
     <div className="not-found">
       <span className="not-found-code">404</span>
       <h2>This page is not in the ledger.</h2>
-      <p>The route does not exist, or the analysis session was lost when the API restarted.</p>
+      <p>The page does not exist, or this analysis session is no longer available.</p>
       <div className="not-found-actions">
         <Link className="button button-primary" to="/">
           Back to overview

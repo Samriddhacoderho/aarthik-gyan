@@ -4,14 +4,17 @@ from fastapi import APIRouter, BackgroundTasks, File, Query, UploadFile, status
 
 from api.errors import ApiError
 from api.schemas import (
+    AskRequest,
+    AskResponse,
     CompanySummary,
+    DeleteDocumentResponse,
     DocumentSummary,
     EvidenceHit,
     EvidenceSearchResponse,
     JobResponse,
     UploadResponse,
 )
-from api.services import graph_service, ingestion_service
+from api.services import document_service, graph_service, ingestion_service, qa_service
 
 router = APIRouter(prefix="/api", tags=["documents"])
 
@@ -24,6 +27,25 @@ def list_documents() -> list[DocumentSummary]:
 @router.get("/documents/{document_hash}", response_model=DocumentSummary)
 def get_document(document_hash: str) -> DocumentSummary:
     return graph_service.get_document(document_hash)
+
+
+@router.delete("/documents/{document_hash}", response_model=DeleteDocumentResponse)
+def delete_document(document_hash: str) -> DeleteDocumentResponse:
+    return document_service.delete_document(document_hash)
+
+
+@router.post(
+    "/documents/{document_hash}/retry",
+    response_model=JobResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def retry_document(
+    document_hash: str,
+    background_tasks: BackgroundTasks,
+) -> JobResponse:
+    job_id, path = ingestion_service.prepare_retry(document_hash)
+    background_tasks.add_task(ingestion_service.run_ingest_job, job_id, str(path))
+    return JobResponse(**ingestion_service.get_job(job_id))
 
 
 @router.get(
@@ -66,6 +88,11 @@ def search_document(
             for row in rows
         ],
     )
+
+
+@router.post("/documents/{document_hash}/ask", response_model=AskResponse)
+def ask_document(document_hash: str, payload: AskRequest) -> AskResponse:
+    return qa_service.ask_document(document_hash, payload.question)
 
 
 @router.get("/jobs", response_model=list[JobResponse])
