@@ -82,6 +82,36 @@ The runner refuses to overwrite results unless `--force` is passed.
 
 The Markdown report includes evidence recall overall and by question type.
 
+## Plotting results
+
+Generate documentation-ready plots from an existing result file:
+
+```bash
+python -m benchmark.plot_results
+```
+
+The script writes five plots to `benchmark/results/plots/`:
+
+- `01_overall_retrieval_quality` — evidence recall and retrieval-hit rate
+- `02_retrieval_latency` — p50 and p95 latency on a logarithmic scale
+- `03_evidence_recall_by_question_type` — system comparison heatmap
+- `04_retrieval_success_and_errors` — successful calls versus errors
+- `05_per_question_recall_distribution` — per-question box and strip plot
+
+The input and output locations can be changed:
+
+```bash
+python -m benchmark.plot_results \
+  --input benchmark/results/latest.json \
+  --output-dir benchmark/results/plots \
+  --format png
+```
+
+The plotting dependencies are `pandas`, `matplotlib`, and `seaborn`. Install
+them in the environment used to run the script if they are not already
+available. Metrics missing from the result file are skipped; they are never
+plotted as zero.
+
 ## Metrics
 
 | Metric | Definition |
