@@ -26,6 +26,16 @@
 - There is no lint or CI configuration. The checks above are the verification path.
 - Routine tests must not perform live ingestion, analysis, or benchmark runs: those write to Neo4j/Qdrant, call LLMs, and benchmark outputs contain private entity names.
 
+## Benchmarking
+
+- The harness in `benchmark/` talks to Neo4j, Qdrant, and the LLM provider through V3 modules (`retrieval.router.route_question`, `vectorstore.indexer.search_chunks`, `llm.provider`). It never calls the API or MCP, so `./start.sh` is not needed — only a filled `.env` and reachable services.
+- Order of operations: `python -m benchmark.generate_questions --count 50`, then `python -m benchmark.run_benchmark --dataset benchmark/questions.jsonl --answer`. Add `--judge` for the LLM hallucination rate; it implies `--answer`.
+- Smoke-test with `--limit 5` and a distinct `--output` (for example `benchmark/results/smoke.json`). Both scripts refuse to overwrite an existing file without `--force`.
+- The graph path makes several LLM calls per question (routing, Cypher generation, answer), so free-tier keys rate-limit quickly. The smoke run is not optional.
+- The generator refuses to pad a small graph: lower `--count` or ingest a richer document instead of weakening the ambiguity filters. Not every question type is reachable on a given graph, so by-type reports can contain gaps.
+- Outputs are `benchmark/questions.jsonl` plus `benchmark/results/latest.json` and `latest.md`. They are gitignored and contain private entity names: never print or commit them. The harness is read-only toward Neo4j and writes no assessments.
+- Answer accuracy is strict whole-token matching against the gold answer, so it reads low even for correct paraphrases. Treat evidence recall and retrieval hit rate as the primary metrics.
+
 ## Architecture constraints
 
 - API settings live in `api/settings.py`. Do not import `config`, `graph.neo4j_client`, or `vectorstore.qdrant_client` at API module import time: `config` raises on missing environment variables, and the database clients connect or create indexes at import. Keep V3 imports lazy inside handlers and background jobs so health checks work when databases are down.
@@ -39,6 +49,8 @@
 - Retry (`POST /api/documents/{hash}/retry`) only accepts `partial`/`failed` documents with a stored PDF under `data/uploads/<hash>/`. It calls `main.ingest`, which skips only `completed` documents and loads cached batches automatically.
 - Deletion takes the ingestion lock; retry refuses while an ingestion is active. Active jobs for the same document are rejected with HTTP 409.
 - Document Q&A lives in `api/services/qa_service.py` and calls the frozen `agent.qa_agent.answer_question`. Retrieval is global (graph plus vector), so the endpoint only checks that the document is `completed`/`partial`; do not add a document-scoped retriever without changing V3.
+- The UI at `/documents/:documentHash/ask` (`frontend/src/pages/AskPage.tsx`) is the browser surface for that Q&A round; it is reached from the documents registry and the finished job card.
+- Frontend copy is client-facing. Keep version and internal vocabulary out of `frontend/src`: no V3/V4 labels, `Neo4j`, `Qdrant`, `LangGraph`, `MCP`, `FastAPI`, "process-local", `SHA-256`, or `data/uploads`. Say "graph database", "evidence index", "review checkpoint", "service", and "reference #" instead. Those terms belong in `README.md` and this file, not in the product UI.
 
 ## Gotchas
 
